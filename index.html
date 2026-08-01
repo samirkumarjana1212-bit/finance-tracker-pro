@@ -506,7 +506,350 @@
       .badges-grid { grid-template-columns: repeat(2, 1fr); }
       .anomaly-detail { grid-template-columns: repeat(3, 1fr); }
     }
+    /* ============================================ *
+     * GLOBAL MONTH BAR
+     * ============================================ */
+    .global-month-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .global-month-bar h2 {
+      font-size: 1.2em;
+      font-weight: 700;
+      margin: 0;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    /* ============================================ *
+     * MONTH SUMMARY (Income/Expense pages)
+     * ============================================ */
+    .month-summary {
+      margin-bottom: 20px;
+    }
+    .month-summary-card {
+      background: var(--gradient-1);
+      border-radius: var(--radius-lg);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: white;
+    }
+    .month-summary-card.expense-summary {
+      background: var(--gradient-2);
+    }
+    .month-summary-card i {
+      font-size: 2.2em;
+      opacity: 0.85;
+    }
+    .month-summary-label {
+      font-size: 0.8em;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+    .month-summary-value {
+      font-size: 2em;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .month-summary-month {
+      font-size: 0.78em;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    /* ============================================ *
+     * CATEGORY BREAKDOWN CARDS (Budget vs Actual)
+     * ============================================ */
+    .category-breakdown-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cat-breakdown-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: var(--transition);
+    }
+    .cat-breakdown-card:hover { border-color: var(--accent); }
+    .cat-breakdown-card .cat-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1em;
+      flex-shrink: 0;
+    }
+    .cat-breakdown-card .cat-info { flex: 1; }
+    .cat-breakdown-card .cat-name {
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+    .cat-breakdown-card .cat-meta {
+      font-size: 0.72em;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .cat-breakdown-card .cat-budget-actual {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .cat-breakdown-card .cat-actual {
+      font-weight: 700;
+      font-size: 1.05em;
+    }
+    .cat-breakdown-card .cat-budget {
+      font-size: 0.72em;
+      color: var(--text-muted);
+    }
+    .cat-breakdown-card .cat-progress-mini {
+      width: 70px;
+      flex-shrink: 0;
+    }
+    .cat-breakdown-card.over-budget {
+      border-left: 3px solid var(--danger);
+    }
+    .cat-breakdown-card.over-budget .cat-actual { color: var(--danger); }
+    .cat-breakdown-card.under-budget {
+      border-left: 3px solid var(--success);
+    }
+    .cat-breakdown-card.under-budget .cat-actual { color: var(--success); }
+
+    .category-breakdown-section {
+      margin-bottom: 20px;
+    }
+    .category-breakdown-section h3 {
+      font-size: 1em;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    /* ============================================ *
+     * DEBTOR-CREDITOR SIDE-BY-SIDE
+     * ============================================ */
+    .debtor-creditor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .dc-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .dc-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .debtor-panel .dc-panel-header {
+      background: rgba(34, 197, 94, 0.08);
+    }
+    .creditor-panel .dc-panel-header {
+      background: rgba(239, 68, 68, 0.08);
+    }
+    .dc-panel-header h3 {
+      font-size: 0.95em;
+      font-weight: 600;
+      margin: 0;
+    }
+    .debtor-panel .dc-panel-header h3 { color: var(--success); }
+    .creditor-panel .dc-panel-header h3 { color: var(--danger); }
+    .dc-total {
+      font-weight: 700;
+      font-size: 0.9em;
+    }
+    .debtor-panel .dc-total { color: var(--success); }
+    .creditor-panel .dc-total { color: var(--danger); }
+    .dc-panel .table-container {
+      margin: 0;
+      border-radius: 0;
+      border: none;
+    }
+    .dc-panel .data-table th {
+      font-size: 0.75em;
+      padding: 8px 10px;
+    }
+    .dc-panel .data-table td {
+      font-size: 0.82em;
+      padding: 8px 10px;
+    }
+
+    /* ============================================ *
+     * SAVINGS ACHIEVEMENT GRID
+     * ============================================ */
+    .savings-achievement-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .achievement-month-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      transition: var(--transition);
+    }
+    .achievement-month-card.achieved {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.05);
+    }
+    .achievement-month-card.missed {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .achievement-month-card .ach-month {
+      font-size: 0.8em;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .achievement-month-card .ach-indicator {
+      font-size: 2em;
+      margin-bottom: 6px;
+    }
+    .achievement-month-card .ach-target {
+      font-size: 0.78em;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .achievement-month-card .ach-actual {
+      font-weight: 700;
+      font-size: 1.1em;
+    }
+    .achievement-month-card .ach-diff {
+      font-size: 0.75em;
+      margin-top: 4px;
+    }
+
+    /* ============================================ *
+     * BUDGET ALERTS / MOM TRENDS
+     * ============================================ */
+    .budget-alerts-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .budget-alerts-section h3,
+    .mom-trends-section h3 {
+      font-size: 1em;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .budget-alert-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88em;
+    }
+    .budget-alert-item:last-child { border-bottom: none; }
+    .budget-alert-item .alert-icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9em;
+      flex-shrink: 0;
+    }
+    .budget-alert-item .alert-icon.danger {
+      background: rgba(239,68,68,0.15);
+      color: var(--danger);
+    }
+    .budget-alert-item .alert-icon.warning {
+      background: rgba(245,158,11,0.15);
+      color: var(--warning);
+    }
+    .budget-alert-item .alert-detail { flex: 1; }
+    .budget-alert-item .alert-percent {
+      font-weight: 700;
+      font-size: 0.95em;
+      text-align: right;
+    }
+    .budget-alert-item .alert-percent.over { color: var(--danger); }
+    .budget-alert-item .alert-percent.under { color: var(--success); }
+
+    .mom-trends-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .mom-trends-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .mom-trend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88em;
+    }
+    .mom-trend-item:last-child { border-bottom: none; }
+    .mom-trend-item .trend-arrow {
+      font-size: 1.3em;
+      font-weight: 700;
+      min-width: 40px;
+      text-align: center;
+    }
+    .mom-trend-item .trend-arrow.up { color: var(--danger); }
+    .mom-trend-item .trend-arrow.down { color: var(--success); }
+    .mom-trend-item .trend-arrow.flat { color: var(--text-muted); }
+    .mom-trend-item .trend-info { flex: 1; }
+    .mom-trend-item .trend-category { font-weight: 600; }
+    .mom-trend-item .trend-detail {
+      font-size: 0.78em;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .mom-trend-item .trend-change {
+      font-weight: 700;
+      font-size: 0.95em;
+    }
+    .mom-trend-item .trend-change.up { color: var(--danger); }
+    .mom-trend-item .trend-change.down { color: var(--success); }
+
+    /* ============================================ *
+     * PLAN TO BUDGET
+     * ============================================ */
+    .plan-to-budget-section .btn-lg {
+      padding: 12px 28px;
+      font-size: 1em;
+      font-weight: 600;
+    }
+
     @media (max-width: 768px) {
+      .debtor-creditor-grid { grid-template-columns: 1fr; }
+      .savings-achievement-grid { grid-template-columns: repeat(2, 1fr); }
       .health-overview { flex-direction: column; gap: 24px; }
       .health-big-gauge svg { width: 140px; height: 140px; }
       .health-big-gauge .gauge-score { font-size: 2.2em; }
@@ -602,15 +945,17 @@
 
   <!-- Main Content -->
   <main class="main-content">
+    <!-- Global Month Selector -->
+    <div class="global-month-bar" id="globalMonthBar">
+      <button class="btn btn-sm" id="btnPrevMonth"><i class="fa-solid fa-chevron-left"></i></button>
+      <h2 id="globalMonthLabel">August 2026</h2>
+      <button class="btn btn-sm" id="btnNextMonth"><i class="fa-solid fa-chevron-right"></i></button>
+      <button class="btn btn-sm" id="btnCurrentMonth" style="margin-left:8px">Current Month</button>
+    </div>
     <!-- Dashboard -->
     <section class="page active" id="page-dashboard">
       <div class="page-header">
         <h1>Dashboard</h1>
-        <div class="period-selector">
-          <button class="period-btn active" data-period="current">Current Month</button>
-          <button class="period-btn" data-period="last">Last Month</button>
-          <button class="period-btn" data-period="year">This Year</button>
-        </div>
       </div>
       <div class="stats-grid">
         <div class="stat-card net-income">
@@ -742,8 +1087,8 @@
           <div id="incomeBreakdown" class="breakdown-list"></div>
         </div>
         <div class="summary-card">
-          <h3>Expense Breakdown</h3>
-          <div id="expenseBreakdown" class="breakdown-list"></div>
+          <h3>Category Budget vs Actual</h3>
+          <div id="dashCategoryBreakdown" class="category-breakdown-grid"></div>
         </div>
       </div>
     </section>
@@ -753,6 +1098,16 @@
       <div class="page-header">
         <h1>Income Sources</h1>
         <button class="btn btn-primary" id="btnAddIncome"><i class="fa-solid fa-plus"></i> Add Income</button>
+      </div>
+      <div class="month-summary" id="incomeMonthSummary">
+        <div class="month-summary-card">
+          <i class="fa-solid fa-circle-dollar-to-slot"></i>
+          <div>
+            <div class="month-summary-label">Total Income</div>
+            <div class="month-summary-value" id="incomeTotalValue">₹0</div>
+            <div class="month-summary-month" id="incomeMonthLabel">for Current Month</div>
+          </div>
+        </div>
       </div>
       <div class="table-container">
         <table class="data-table">
@@ -778,6 +1133,20 @@
         <h1>Expenses</h1>
         <button class="btn btn-primary" id="btnAddExpense"><i class="fa-solid fa-plus"></i> Add Expense</button>
       </div>
+      <div class="month-summary" id="expenseMonthSummary">
+        <div class="month-summary-card expense-summary">
+          <i class="fa-solid fa-credit-card"></i>
+          <div>
+            <div class="month-summary-label">Total Expenses</div>
+            <div class="month-summary-value" id="expenseTotalValue">₹0</div>
+            <div class="month-summary-month" id="expenseMonthLabel">for Current Month</div>
+          </div>
+        </div>
+      </div>
+      <div class="category-breakdown-section" id="expenseCategoryBreakdown">
+        <h3>Category Breakdown</h3>
+        <div class="category-breakdown-grid" id="expenseCatsGrid"></div>
+      </div>
       <div class="table-container">
         <table class="data-table">
           <thead>
@@ -800,7 +1169,11 @@
     <section class="page" id="page-budget">
       <div class="page-header">
         <h1>Monthly Budget</h1>
-        <button class="btn btn-primary" id="btnSetBudget"><i class="fa-solid fa-gear"></i> Set Budget</button>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="badge badge-info" id="budgetMonthDisplay">Current Month</span>
+          <button class="btn btn-primary" id="btnSetBudget"><i class="fa-solid fa-gear"></i> Set Budget</button>
+          <button class="btn btn-secondary" id="btnCopyBudgetNext" title="Copy this month's budget to next month"><i class="fa-solid fa-copy"></i> Copy to Next Month</button>
+        </div>
       </div>
       <div class="budget-overview">
         <div class="budget-total-card">
@@ -828,28 +1201,58 @@
     <section class="page" id="page-debtors-creditors">
       <div class="page-header">
         <h1>Debtors & Creditors</h1>
-        <button class="btn btn-primary" id="btnAddParty"><i class="fa-solid fa-plus"></i> Add Entry</button>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn btn-sm btn-secondary" id="btnPrevPartyMonth"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="badge badge-info" id="partyMonthLabel">All Months</span>
+          <button class="btn btn-sm btn-secondary" id="btnNextPartyMonth"><i class="fa-solid fa-chevron-right"></i></button>
+          <button class="btn btn-primary" id="btnAddParty"><i class="fa-solid fa-plus"></i> Add Entry</button>
+        </div>
       </div>
-      <div class="tabs">
-        <button class="tab active" data-tab="debtors">Debtors (Receivable)</button>
-        <button class="tab" data-tab="creditors">Creditors (Payable)</button>
-      </div>
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Person/Entity</th>
-              <th>Amount (₹)</th>
-              <th>Date</th>
-              <th>Due Date</th>
-              <th>Status</th>
-              <th>Note</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="partyTableBody"></tbody>
-        </table>
-        <div class="empty-state" id="partyEmpty">No entries yet.</div>
+      <div class="debtor-creditor-grid">
+        <!-- Debtors (Money to Receive) -->
+        <div class="dc-panel debtor-panel">
+          <div class="dc-panel-header">
+            <h3><i class="fa-solid fa-arrow-down"></i> Money to Receive</h3>
+            <span class="dc-total" id="totalReceivable">Total: ₹0</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Person/Entity</th>
+                  <th>Amount (₹)</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="debtorTableBody"></tbody>
+            </table>
+            <div class="empty-state" id="debtorEmpty">No outstanding receivables.</div>
+          </div>
+        </div>
+        <!-- Creditors (Money to Pay) -->
+        <div class="dc-panel creditor-panel">
+          <div class="dc-panel-header">
+            <h3><i class="fa-solid fa-arrow-up"></i> Money to Pay</h3>
+            <span class="dc-total" id="totalPayable">Total: ₹0</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Person/Entity</th>
+                  <th>Amount (₹)</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="creditorTableBody"></tbody>
+            </table>
+            <div class="empty-state" id="creditorEmpty">No outstanding payables.</div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -876,6 +1279,8 @@
           </div>
         </div>
       </div>
+      <h3 style="margin-top:24px">Month-by-Month Achievement</h3>
+      <div class="savings-achievement-grid" id="savingsAchievementGrid"></div>
       <h3 style="margin-top:24px">Savings History</h3>
       <div class="table-container">
         <table class="data-table">
@@ -939,6 +1344,14 @@
           <textarea id="planNotes" placeholder="Planning notes for next month..." class="input textarea"></textarea>
           <button class="btn btn-primary btn-sm" id="btnSavePlanNotes">Save Notes</button>
         </div>
+      </div>
+      <div class="plan-to-budget-section" style="margin-top:24px; text-align:center;">
+        <button class="btn btn-primary btn-lg" id="btnCreateBudgetFromPlan">
+          <i class="fa-solid fa-wallet"></i> Create Budget from Plan
+        </button>
+        <p style="color:var(--text-muted);font-size:0.85em;margin-top:8px;">
+          This will copy your expense limit and savings target into next month's budget.
+        </p>
       </div>
     </section>
 
@@ -1252,6 +1665,18 @@
       <div class="page-header">
         <h1><i class="fa-solid fa-magnifying-glass-chart"></i> Smart Alerts</h1>
         <span class="badge badge-info" id="anomalyCount">0 detected</span>
+      </div>
+
+      <!-- Budget Comparison Alerts -->
+      <div class="budget-alerts-section" id="budgetComparisonAlerts">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> Budget Comparison Alerts</h3>
+        <div id="budgetAlertCards"></div>
+      </div>
+
+      <!-- Month-over-Month Trends -->
+      <div class="mom-trends-section" id="momTrends">
+        <h3><i class="fa-solid fa-arrow-trend-up"></i> Month-over-Month Spending Trends</h3>
+        <div class="mom-trends-grid" id="momTrendsGrid"></div>
       </div>
 
       <!-- Sensitivity Settings -->

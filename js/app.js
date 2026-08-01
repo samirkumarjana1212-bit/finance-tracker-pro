@@ -2,7 +2,30 @@
  * Finance Tracker Pro - Main Application
  */
 
+// ============================================
+// GLOBAL MONTH STATE
+// ============================================
+
+let currentViewMonth = new Date();
 let currentPeriod = 'current';
+
+function getViewMonthKey() {
+  return `${currentViewMonth.getFullYear()}-${String(currentViewMonth.getMonth()+ 1).padStart(2,'0')}`;
+}
+function getViewMonthName() {
+  return currentViewMonth.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+}
+function getViewMonthRange() {
+  const y = currentViewMonth.getFullYear();
+  const m = currentViewMonth.getMonth() + 1;
+  const lastDay = new Date(y, m, 0).getDate();
+  return { from: `${y}-${String(m).padStart(2,'0')}-01`, to: `${y}-${String(m).padStart(2,'0')}-${lastDay}` };
+}
+function setViewMonth(y, m) {
+  currentViewMonth = new Date(y, m-1, 1);
+  updateGlobalMonthLabel();
+  refreshAll();
+}
 let currentPartyType = 'debtor';
 let editingId = null;
 let editingStore = null;
@@ -28,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await openDB();
     initNavigation();
+    initGlobalMonthBar();
     initDashboard();
     initIncome();
     initExpenses();
@@ -42,12 +66,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     initAnomalies();
     initModals();
     updateMobileDate();
+    updateGlobalMonthLabel();
     refreshAll();
   } catch (err) {
     console.error('Init error:', err);
     showToast('Failed to initialize app', 'error');
   }
 });
+
+// ============================================
+// GLOBAL MONTH BAR
+// ============================================
+
+function initGlobalMonthBar() {
+  document.getElementById('btnPrevMonth').addEventListener('click', () => {
+    currentViewMonth.setMonth(currentViewMonth.getMonth() - 1);
+    updateGlobalMonthLabel();
+    refreshAll();
+  });
+  document.getElementById('btnNextMonth').addEventListener('click', () => {
+    currentViewMonth.setMonth(currentViewMonth.getMonth() + 1);
+    updateGlobalMonthLabel();
+    refreshAll();
+  });
+  document.getElementById('btnCurrentMonth').addEventListener('click', () => {
+    currentViewMonth = new Date();
+    updateGlobalMonthLabel();
+    refreshAll();
+  });
+}
+
+function updateGlobalMonthLabel() {
+  const el = document.getElementById('globalMonthLabel');
+  if (el) el.textContent = getViewMonthName();
+}
 
 // ============================================
 // NAVIGATION
@@ -151,7 +203,7 @@ async function refreshAll() {
 }
 
 async function refreshDashboard() {
-  const { from, to } = getMonthRange(currentPeriod);
+  const { from, to } = getViewMonthRange();
 
   const allIncome = await getAllRecords('income');
   const allExpenses = await getAllRecords('expenses');
@@ -172,19 +224,16 @@ async function refreshDashboard() {
   const netEl = document.getElementById('statNetIncome');
   netEl.style.color = netIncome >= 0 ? 'var(--success)' : 'var(--danger)';
 
-  // Change indicators
-  if (currentPeriod === 'current') {
-    const lastRange = getMonthRange('last');
-    const lastIncome = allIncome.filter(i => i.date >= lastRange.from && i.date <= lastRange.to)
-      .reduce((s, i) => s + Number(i.amount), 0);
-    const lastExpense = allExpenses.filter(e => e.date >= lastRange.from && e.date <= lastRange.to)
-      .reduce((s, e) => s + Number(e.amount), 0);
+  // Change indicators - compare to previous month
+  const prevMonth = new Date(currentViewMonth); prevMonth.setMonth(prevMonth.getMonth() - 1);
+  const prevKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}-`;
+  const lastIncome = allIncome.filter(i => i.date.startsWith(prevKey)).reduce((s,i)=>s+Number(i.amount),0);
+  const lastExpense = allExpenses.filter(e => e.date.startsWith(prevKey)).reduce((s,e)=>s+Number(e.amount),0);
 
-    document.getElementById('statIncomeChange').textContent =
-      lastIncome ? `${((totalIncome - lastIncome) / lastIncome * 100).toFixed(1)}% vs last month` : '—';
-    document.getElementById('statExpenseChange').textContent =
-      lastExpense ? `${((totalExpense - lastExpense) / lastExpense * 100).toFixed(1)}% vs last month` : '—';
-  }
+  document.getElementById('statIncomeChange').textContent =
+    lastIncome ? `${((totalIncome - lastIncome) / lastIncome * 100).toFixed(1)}% vs last month` : '—';
+  document.getElementById('statExpenseChange').textContent =
+    lastExpense ? `${((totalExpense - lastExpense) / lastExpense * 100).toFixed(1)}% vs last month` : '—';
 
   // Savings
   const monthKey = getCurrentMonthKey();
@@ -221,8 +270,8 @@ async function refreshDashboard() {
       <span class="breakdown-amount" style="color:var(--danger)">${formatCurrency(amt)}</span>
     </div>`).join('') || '<div class="empty-state">No expenses this period</div>';
 
-  // Budget alerts
-  renderBudgetAlerts(expenseByCat);
+  // Dashboard category breakdown (budget vs actual)
+  renderDashCategoryBreakdown(income, expenseByCat);
 
   // Streak
   renderStreakStat(expenses, allExpenses);
@@ -251,12 +300,36 @@ async function renderBudgetAlerts(expenseByCat) {
   }
 
   const alertsEl = document.getElementById('budgetAlerts');
-  alertsEl.innerHTML = alerts.map(a =>
+  if (alertsEl) alertsEl.innerHTML = alerts.map(a =>
     `<div class="alert alert-${a.type}">
       <i class="fa-solid ${a.icon}"></i>
       <span>${a.msg}</span>
     </div>`
   ).join('');
+}
+
+async function renderDashCategoryBreakdown(income, expenseByCat) {
+  const budgets = await getAllRecords('budgets') || [];
+  const gridEl = document.getElementById('dashCategoryBreakdown');
+  if (!gridEl) return;
+
+  if (budgets.length === 0) {
+    gridEl.innerHTML = '<div class="breakdown-item" style="color:var(--text-muted)">Set budget categories to see comparison</div>';
+    return;
+  }
+
+  gridEl.innerHTML = budgets.map(b => {
+    const spent = expenseByCat[b.category] || 0;
+    const pct = b.amount > 0 ? (spent / b.amount) * 100 : 0;
+    const overClass = pct >= 100 ? 'over' : pct >= 80 ? 'near' : '';
+    return `<div class="breakdown-item">
+      <span class="breakdown-label">${b.category}</span>
+      <span class="breakdown-amount" style="color:${pct>=100?'var(--danger)':pct>=80?'var(--warning)':'var(--success)}">${formatCurrency(spent)} / ${formatCurrency(b.amount)}</span>
+    </div>`;
+  }).join('');
+
+  // Also show budget alerts
+  renderBudgetAlerts(expenseByCat);
 }
 
 // ============================================
@@ -269,30 +342,19 @@ function initIncome() {
 
 async function renderIncome() {
   const records = await getAllRecords('income');
-  records.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const {from,to}=getViewMonthRange();
+  const monthRecords = records.filter(r=>r.date>=from&&r.date<=to);
+  monthRecords.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const total = monthRecords.reduce((s,r)=>s+Number(r.amount),0);
+  const el = document.getElementById('incomeTotalValue'); if(el) el.textContent=formatCurrency(total);
+  const ml = document.getElementById('incomeMonthLabel'); if(ml) ml.textContent='for '+getViewMonthName();
+
   const tbody = document.getElementById('incomeTableBody');
   const empty = document.getElementById('incomeEmpty');
-
-  if (records.length === 0) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-
-  empty.style.display = 'none';
-  tbody.innerHTML = records.map(r => `
-    <tr>
-      <td><strong>${r.source}</strong></td>
-      <td style="color:var(--success);font-weight:600">${formatCurrency(r.amount)}</td>
-      <td>${formatDate(r.date)}</td>
-      <td><span class="badge badge-info">${r.category || 'General'}</span></td>
-      <td>${r.note || '—'}</td>
-      <td>
-        <button class="btn-icon edit" onclick="editRecord('income', ${r.id})" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-        <button class="btn-icon delete" onclick="deleteAndRefresh('income', ${r.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
-      </td>
-    </tr>
-  `).join('');
+  if (monthRecords.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=monthRecords.map(r=>`<tr><td><strong>${r.source}</strong></td><td style="color:var(--success);font-weight:600">${formatCurrency(r.amount)}</td><td>${formatDate(r.date)}</td><td><span class="badge badge-info">${r.category||'General'}</span></td><td>${r.note||'—'}</td><td><button class="btn-icon edit" onclick="editRecord('income',${r.id})"><i class="fa-solid fa-pen-to-square"></i></button><button class="btn-icon delete" onclick="deleteAndRefresh('income',${r.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
 }
 
 // ============================================
@@ -305,30 +367,25 @@ function initExpenses() {
 
 async function renderExpenses() {
   const records = await getAllRecords('expenses');
-  records.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const {from,to}=getViewMonthRange();
+  const monthRecords = records.filter(r=>r.date>=from&&r.date<=to);
+  monthRecords.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total = monthRecords.reduce((s,r)=>s+Number(r.amount),0);
+
+  const el = document.getElementById('expenseTotalValue'); if(el) el.textContent=formatCurrency(total);
+  const ml = document.getElementById('expenseMonthLabel'); if(ml) ml.textContent='for '+getViewMonthName();
+
+  // Category breakdown
+  const catMap={}; monthRecords.forEach(e=>{catMap[e.category]=(catMap[e.category]||0)+Number(e.amount);});
+  const budgets=await getAllRecords('budgets')||[];
+  const gridEl=document.getElementById('expenseCatsGrid');
+  if(gridEl) gridEl.innerHTML = budgets.length ? budgets.map(b=>{const spent=catMap[b.category]||0;const pct=b.amount>0?(spent/b.amount)*100:0;return `<div class="cat-compare-card${pct>=100?' over':''}"><div class="cat-compare-name">${b.category}</div><div class="progress-bar" style="margin:6px 0"><div class="progress-fill ${pct>100?'danger':pct>80?'warning':'safe'}" style="width:${Math.min(pct,100)}%"></div></div><div class="cat-compare-numbers"><span>Budget: <strong>${formatCurrency(b.amount)}</strong></span><span>Actual: <strong class="actual" style="color:${pct>=100?'var(--danger)':'var(--success)'}">${formatCurrency(spent)}</strong></span></div></div>`}).join('') : '<div class="empty-state">Set budget first to compare</div>';
+
   const tbody = document.getElementById('expenseTableBody');
   const empty = document.getElementById('expenseEmpty');
-
-  if (records.length === 0) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-
-  empty.style.display = 'none';
-  tbody.innerHTML = records.map(r => `
-    <tr>
-      <td><strong>${r.category}</strong>${r.mood ? ` <span style="font-size:1.2em">${getMoodEmoji(r.mood)}</span>` : ''}</td>
-      <td style="color:var(--danger);font-weight:600">${formatCurrency(r.amount)}</td>
-      <td>${formatDate(r.date)}</td>
-      <td><span class="badge ${r.type === 'Personal' ? 'badge-warning' : 'badge-info'}">${r.type || 'Business'}</span></td>
-      <td>${r.note || '—'}</td>
-      <td>
-        <button class="btn-icon edit" onclick="editRecord('expenses', ${r.id})" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-        <button class="btn-icon delete" onclick="deleteAndRefresh('expenses', ${r.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
-      </td>
-    </tr>
-  `).join('');
+ if(monthRecords.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+ empty.style.display='none';
+ tbody.innerHTML=monthRecords.map(r=>`<tr><td><strong>${r.category}</strong>${r.mood?` <span style="font-size:1.2em">${getMoodEmoji(r.mood)}</span>`:''}</td><td style="color:var(--danger);font-weight:600">${formatCurrency(r.amount)}</td><td>${formatDate(r.date)}</td><td><span class="badge ${r.type==='Personal'?'badge-warning':'badge-info'}">${r.type||'Business'}</span></td><td>${r.note||'—'}</td><td><button class="btn-icon edit" onclick="editRecord('expenses',${r.id})"><i class="fa-solid fa-pen-to-square"></i></button><button class="btn-icon delete" onclick="deleteAndRefresh('expenses',${r.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
 }
 
 // ============================================
@@ -340,15 +397,15 @@ function initBudget() {
 }
 
 async function renderBudget() {
-  const budgets = await getAllRecords('budgets');
-  const { from, to } = getMonthRange('current');
+  const budgetMonth = getViewMonthKey();
+  document.getElementById('budgetMonthDisplay').textContent = getViewMonthName();
+  const budgets = await getAllRecords('budgets')||[];
+  const { from, to } = getViewMonthRange();
   const allExpenses = await getAllRecords('expenses');
   const expenses = allExpenses.filter(e => e.date >= from && e.date <= to);
 
   const expenseByCat = {};
-  expenses.forEach(e => {
-    expenseByCat[e.category] = (expenseByCat[e.category] || 0) + Number(e.amount);
-  });
+  expenses.forEach(e => { expenseByCat[e.category] = (expenseByCat[e.category] || 0) + Number(e.amount); });
 
   const totalBudget = budgets.reduce((s, b) => s + Number(b.amount), 0);
   const totalSpent = Object.values(expenseByCat).reduce((s, v) => s + v, 0);
@@ -360,42 +417,38 @@ async function renderBudget() {
   document.getElementById('totalRemaining').textContent = formatCurrency(totalRemaining);
   document.getElementById('budgetPercent').textContent = Math.min(budgetPct, 100).toFixed(0) + '%';
 
-  // Ring
   const ring = document.getElementById('budgetRing');
   const circumference = 326.73;
   const offset = circumference - (Math.min(budgetPct, 100) / 100) * circumference;
   ring.style.strokeDashoffset = offset;
   ring.style.stroke = budgetPct > 100 ? 'var(--danger)' : budgetPct > 80 ? 'var(--warning)' : 'var(--accent)';
 
-  // Category cards
   const categoriesEl = document.getElementById('budgetCategories');
   categoriesEl.innerHTML = budgets.map(b => {
     const spent = expenseByCat[b.category] || 0;
     const pct = b.amount > 0 ? (spent / b.amount) * 100 : 0;
     const overClass = pct >= 100 ? 'over' : '';
     const fillClass = pct > 100 ? 'danger' : pct > 80 ? 'warning' : 'safe';
-
-    return `
-      <div class="budget-cat-card ${overClass}">
-        <div class="cat-header">
-          <span class="cat-name">${b.category}</span>
-          <span class="cat-status ${overClass}">${pct.toFixed(0)}%</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill ${fillClass}" style="width:${Math.min(pct, 100)}%"></div>
-        </div>
+    return `<div class="budget-cat-card ${overClass}">
+        <div class="cat-header"><span class="cat-name">${b.category}</span><span class="cat-status ${overClass}">${pct.toFixed(0)}%</span></div>
+        <div class="progress-bar"><div class="progress-fill ${fillClass}" style="width:${Math.min(pct, 100)}%"></div></div>
         <div class="cat-numbers">
-          <span>Spent: <strong style="color:${pct >= 100 ? 'var(--danger)' : 'inherit'}">${formatCurrency(spent)}</strong></span>
+          <span>Spent: <strong style="color:${pct>=100?'var(--danger)':'inherit'}">${formatCurrency(spent)}</strong></span>
           <span>Budget: <strong>${formatCurrency(b.amount)}</strong></span>
-          <span>Left: <strong style="color:${pct >= 100 ? 'var(--danger)' : 'var(--success)'}">${formatCurrency(Math.max(0, b.amount - spent))}</strong></span>
+          <span>Left: <strong style="color:${pct>=100?'var(--danger)':'var(--success)'}">${formatCurrency(Math.max(0,b.amount-spent))}</strong></span>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
           <button class="btn btn-secondary btn-sm" onclick="editBudgetCard('${b.category}',${b.amount})"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
           <button class="btn btn-secondary btn-sm" style="background:rgba(239,68,68,0.1);color:var(--danger)" onclick="deleteBudgetCard('${b.category}')"><i class="fa-solid fa-trash"></i> Delete</button>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('') || '<div class="empty-state">No budget categories set. Click "Set Budget" to begin.</div>';
+
+  document.getElementById('btnCopyBudgetNext').onclick = async () => {
+    const nextDate = new Date(currentViewMonth); nextDate.setMonth(nextDate.getMonth()+1);
+    for(const b of budgets){await updateRecord('budgets',{category:b.category,amount:b.amount});}
+    showToast('Budget copied to next month pattern','success');
+  };
 }
 
 // ============================================
@@ -416,41 +469,19 @@ function initParties() {
 }
 
 async function renderParties() {
-  const records = (await getAllRecords('parties')).filter(p => p.type === currentPartyType);
-  records.sort((a, b) => new Date(b.date) - new Date(a.date));
-  const tbody = document.getElementById('partyTableBody');
-  const empty = document.getElementById('partyEmpty');
+  const records = await getAllRecords('parties');
+  const debtors = records.filter(p=>p.type==='debtor').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const creditors = records.filter(p=>p.type==='creditor').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const totalRecv = debtors.filter(d=>d.status!=='Paid').reduce((s,d)=>s+Number(d.amount),0);
+  const totalPay = creditors.filter(c=>c.status!=='Paid').reduce((s,c)=>s+Number(c.amount),0);
 
-  if (records.length === 0) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-
-  empty.style.display = 'none';
   const now = new Date();
-  tbody.innerHTML = records.map(r => {
-    const overdue = new Date(r.dueDate) < now && r.status !== 'Paid';
-    return `
-      <tr>
-        <td><strong>${r.name}</strong></td>
-        <td style="font-weight:600;color:${r.type === 'debtor' ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(r.amount)}</td>
-        <td>${formatDate(r.date)}</td>
-        <td>${formatDate(r.dueDate)}</td>
-        <td>
-          <span class="badge ${r.status === 'Paid' ? 'badge-success' : overdue ? 'badge-danger' : 'badge-warning'}">
-            ${r.status}${overdue ? ' (Overdue)' : ''}
-          </span>
-        </td>
-        <td>${r.note || '—'}</td>
-        <td>
-          <button class="btn-icon edit" onclick="editRecord('parties', ${r.id})" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-          ${r.status !== 'Paid' ? `<button class="btn-icon" onclick="markPartyPaid(${r.id})" title="Mark Paid" style="color:var(--success)"><i class="fa-solid fa-check-circle"></i></button>` : ''}
-          <button class="btn-icon delete" onclick="deleteAndRefresh('parties', ${r.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  const renderTable = (records, type) => records.length ? records.map(r=>{const overdue=new Date(r.dueDate)<now&&r.status!=='Paid';return `<tr><td><strong>${r.name}</strong></td><td style="font-weight:600;color:${type==='debtor'?'var(--success)':'var(--danger)'}">${formatCurrency(r.amount)}</td><td>${formatDate(r.date)}</td><td>${formatDate(r.dueDate)}</td><td><span class="badge ${r.status==='Paid'?'badge-success':overdue?'badge-danger':'badge-warning'}">${r.status}${overdue?' (Overdue)':''}</span></td><td>${r.note||'—'}</td><td><button class="btn-icon edit" onclick="editRecord('parties',${r.id})"><i class="fa-solid fa-pen-to-square"></i></button>${r.status!=='Paid'?`<button class="btn-icon" onclick="markPartyPaid(${r.id})" style="color:var(--success)"><i class="fa-solid fa-check-circle"></i></button>`:''}<button class="btn-icon delete" onclick="deleteAndRefresh('parties',${r.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join('') : '<tr><td colspan="7" class="empty-state">No entries</td></tr>';
+
+  document.getElementById('debtorTableBody').innerHTML = renderTable(debtors, 'debtor');
+  document.getElementById('creditorTableBody').innerHTML = renderTable(creditors, 'creditor');
+  document.getElementById('debtorTotal').textContent = formatCurrency(totalRecv);
+  document.getElementById('creditorTotal').textContent = formatCurrency(totalPay);
 }
 
 async function markPartyPaid(id) {
@@ -472,24 +503,15 @@ function initSavings() {
 
 async function renderSavings() {
   const goal = await getRecord('savingsGoals', 1);
-  const history = await getAllRecords('savingsHistory');
-  history.sort((a, b) => b.month.localeCompare(a.month));
-
-  const badge = document.getElementById('savingsGoalBadge');
   const goalAmount = goal ? goal.monthlyTarget : 0;
 
-  if (goalAmount > 0) {
-    badge.textContent = formatCurrency(goalAmount) + '/mo';
-    badge.className = 'goal-badge set';
-  } else {
-    badge.textContent = 'Not Set';
-    badge.className = 'goal-badge not-set';
-  }
+  const badge = document.getElementById('savingsGoalBadge');
+  if (goalAmount > 0) { badge.textContent = formatCurrency(goalAmount) + '/mo'; badge.className = 'goal-badge set'; }
+  else { badge.textContent = 'Not Set'; badge.className = 'goal-badge not-set'; }
 
   document.getElementById('savingsGoalAmount').textContent = formatCurrency(goalAmount);
 
-  // Calculate current month savings
-  const { from, to } = getMonthRange('current');
+  const { from, to } = getViewMonthRange();
   const allIncome = await getAllRecords('income');
   const allExpenses = await getAllRecords('expenses');
   const income = allIncome.filter(i => i.date >= from && i.date <= to).reduce((s, i) => s + Number(i.amount), 0);
@@ -502,17 +524,20 @@ async function renderSavings() {
   fill.style.width = Math.min(pct, 100) + '%';
   fill.className = 'progress-fill ' + (pct >= 100 ? 'safe' : pct >= 50 ? 'warning' : 'danger');
 
-  // History table
+  // History - show all months saved vs target
+  const history = await getAllRecords('savingsHistory');
+  history.sort((a, b) => b.month.localeCompare(a.month));
   const tbody = document.getElementById('savingsTableBody');
-  tbody.innerHTML = history.map(h => `
-    <tr>
+  tbody.innerHTML = history.length ? history.map(h => {
+    const achieved = h.target > 0 ? h.saved >= h.target : false;
+    return `<tr>
       <td><strong>${h.month}</strong></td>
       <td>${formatCurrency(h.target)}</td>
       <td style="color:var(--success)">${formatCurrency(h.saved)}</td>
-      <td style="color:${h.shortfall > 0 ? 'var(--danger)' : 'var(--success)'}">${formatCurrency(h.shortfall)}</td>
-      <td><span class="badge ${h.shortfall <= 0 ? 'badge-success' : 'badge-danger'}">${h.shortfall <= 0 ? 'Achieved' : 'Missed'}</span></td>
-    </tr>
-  `).join('') || '<tr><td colspan="5" class="empty-state">No savings history yet</td></tr>';
+      <td style="color:${h.shortfall>0?'var(--danger)':'var(--success)'}">${formatCurrency(h.shortfall)}</td>
+      <td><span class="${achieved?'achieve-yes':'achieve-no'}">${achieved?'✅ Achieved':'❌ Missed'}</span></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5" class="empty-state">No savings history yet</td></tr>';
 }
 
 // ============================================
@@ -1125,20 +1150,20 @@ async function renderDashQuestWidget() {
 function initHealth() {}
 
 async function renderHealth() {
-  const {from,to}=getMonthRange('current');
+  const {from,to}=getViewMonthRange();
   const income = (await getAllRecords('income')).filter(i=>i.date>=from&&i.date<=to);
   const expenses = (await getAllRecords('expenses')).filter(e=>e.date>=from&&e.date<=to);
   const totalInc = income.reduce((s,i)=>s+Number(i.amount),0);
   const totalExp = expenses.reduce((s,e)=>s+Number(e.amount),0);
-  const budgets = await getAllRecords('budgets');
+  const budgets = await getAllRecords('budgets')||[];
 
   const savingsRate = totalInc>0?Math.min(100,((totalInc-totalExp)/totalInc)*100):0;
   const emergencyFund = 50;
   const expenseByCat={};expenses.forEach(e=>{expenseByCat[e.category]=(expenseByCat[e.category]||0)+Number(e.amount);});
   const overCats = budgets.filter(b=>(expenseByCat[b.category]||0)>Number(b.amount)).length;
   const budgetAdherence = budgets.length?Math.round(((budgets.length-overCats)/budgets.length)*100):50;
-  const debtors = (await getAllRecords('parties')).filter(p=>p.type==='creditor'&&p.status!=='Paid');
-  const totalDebt = debtors.reduce((s,d)=>s+Number(d.amount),0);
+  const creditors = (await getAllRecords('parties')).filter(p=>p.type==='creditor'&&p.status!=='Paid');
+  const totalDebt = creditors.reduce((s,d)=>s+Number(d.amount),0);
   const debtRatio = totalInc>0?Math.max(0,100-(totalDebt/(totalInc*3))*100):50;
 
   const metrics = {savingsRate,budgetAdherence,emergencyFund,debtRatio,investmentHealth:50,spendingConsistency:60};

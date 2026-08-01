@@ -1378,4 +1378,130 @@ select.input { cursor: pointer; }
   .patterns-grid { grid-template-columns: 1fr; }
   .quests-grid { grid-template-columns: 1fr; }
   .badges-grid { grid-template-columns: repeat(3, 1fr); }
+  .dc-split { grid-template-columns: 1fr; }
+}
+
+/* ============================================ *
+ * GLOBAL MONTH BAR
+ * ============================================ */
+
+.global-month-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+
+.global-month-bar h2 {
+  font-size: 1.1em;
+  font-weight: 700;
+  min-width: 150px;
+  text-align: center;
+}
+
+/* ============================================ *
+ * DEBTORS / CREDITORS TWO-COLUMN LAYOUT
+ * ============================================ */
+
+.dc-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dc-column {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.dc-total {
+  font-size: 1.4em;
+  font-weight: 800;
+  margin: 8px 0;
+}
+
+.dc-total.receive {
+  color: var(--success);
+}
+
+.dc-total.pay {
+  color: var(--danger);
+}
+
+/* ============================================ *
+ * CATEGORY BUDGET VS ACTUAL CARDS
+ * ============================================ */
+
+.cat-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.cat-compare-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.cat-compare-card.over {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.cat-compare-name {
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.cat-compare-numbers {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8em;
+  margin-top: 8px;
+}
+
+.cat-compare-numbers .actual {
+  font-weight: 700;
+}
+
+/* ============================================ *
+ * SAVINGS ACHIEVEMENT TABLE
+ * ============================================ */
+
+.achieve-yes {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.achieve-no {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* ============================================ *
+ * MONTH TAG
+ * ============================================ */
+
+.month-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  background: var(--accent-glow);
+  color: var(--accent);
+  margin-left: 8px;
 }
