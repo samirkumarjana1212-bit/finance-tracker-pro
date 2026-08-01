@@ -949,3 +949,433 @@ select.input { cursor: pointer; }
 
   .budget-total-card { flex-direction: column; align-items: flex-start; }
 }
+
+/* ============================================ *
+ * FINANCIAL HEALTH SCORE GAUGE
+ * ============================================ */
+
+.health-gauge {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
+}
+
+.health-gauge svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.health-gauge-bg {
+  fill: none;
+  stroke: var(--bg-tertiary);
+  stroke-width: 12;
+}
+
+.health-gauge-fill {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease, stroke 0.5s ease;
+}
+
+.health-gauge-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.health-score {
+  font-size: 2.5em;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.health-label {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.health-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.health-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.health-item-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.health-item-name {
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.health-item-score {
+  font-weight: 700;
+  font-size: 0.9em;
+}
+
+/* ============================================ *
+ * STREAK CARD (DASHBOARD)
+ * ============================================ */
+
+.streak-card {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.streak-card .streak-icon {
+  font-size: 2em;
+}
+
+.streak-flame {
+  color: var(--warning);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================ *
+ * SKIP SUGGESTION CARD (DASHBOARD)
+ * ============================================ */
+
+.skip-card {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(6, 182, 212, 0.08));
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.skip-card .skip-title {
+  font-size: 1em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.skip-card .skip-amount {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.skip-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ============================================ *
+ * EMOTIONAL JOURNAL
+ * ============================================ */
+
+.mood-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mood-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  font-size: 1.5em;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mood-btn:hover {
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+
+.mood-btn.selected {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  transform: scale(1.15);
+}
+
+.journal-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.journal-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+
+.journal-stat-value {
+  font-size: 1.5em;
+  font-weight: 700;
+}
+
+.journal-stat-label {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.patterns-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pattern-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.pattern-card h4 {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+}
+
+.pattern-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.85em;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.pattern-item:last-child {
+  border-bottom: none;
+}
+
+/* ============================================ *
+ * QUESTS & REWARDS
+ * ============================================ */
+
+.quest-level-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.quest-level {
+  font-size: 3em;
+  font-weight: 900;
+  background: var(--gradient-1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.quest-title {
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+.quests-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.quest-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: var(--transition);
+}
+
+.quest-card.completed {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.quest-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.quest-name {
+  font-weight: 600;
+}
+
+.quest-xp {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.85em;
+}
+
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.badge-item {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.badge-icon {
+  font-size: 2em;
+}
+
+.badge-name {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.streak-tracker {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.streak-days {
+  display: flex;
+  gap: 6px;
+}
+
+.streak-day {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7em;
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+}
+
+.streak-day.active {
+  border-color: var(--warning);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+/* ============================================ *
+ * SMART ALERTS / ANOMALIES
+ * ============================================ */
+
+.anomaly-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.anomaly-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: var(--transition);
+}
+
+.anomaly-item:hover {
+  border-color: var(--accent);
+}
+
+.anomaly-info {
+  flex: 1;
+}
+
+.anomaly-category {
+  font-weight: 600;
+}
+
+.anomaly-detail {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.anomaly-deviation {
+  font-weight: 700;
+  font-size: 0.9em;
+}
+
+.anomaly-deviation.up {
+  color: var(--danger);
+}
+
+.anomaly-deviation.down {
+  color: var(--success);
+}
+
+.anomaly-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sensitivity-slider {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.sensitivity-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75em;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ============================================ *
+ * RESPONSIVE ADDITIONS
+ * ============================================ */
+
+@media (max-width: 768px) {
+  .health-breakdown { grid-template-columns: 1fr; }
+  .journal-stats { grid-template-columns: repeat(2, 1fr); }
+  .patterns-grid { grid-template-columns: 1fr; }
+  .quests-grid { grid-template-columns: 1fr; }
+  .badges-grid { grid-template-columns: repeat(3, 1fr); }
+}

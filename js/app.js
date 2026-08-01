@@ -11,6 +11,19 @@ let editingStore = null;
 // INIT
 // ============================================
 
+let selectedMood = 'neutral';
+
+// ============================================
+// LOCAL STORAGE HELPERS (Fallback for IndexedDB)
+// ============================================
+
+function lsGet(key) {
+  try { return JSON.parse(localStorage.getItem('finance_' + key)) || []; } catch(e) { return []; }
+}
+function lsSet(key, val) {
+  localStorage.setItem('finance_' + key, JSON.stringify(val));
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await openDB();
@@ -23,6 +36,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initSavings();
     initGoals();
     initPlanning();
+    initHealth();
+    initEmotional();
+    initQuests();
+    initAnomalies();
     initModals();
     updateMobileDate();
     refreshAll();
@@ -100,6 +117,10 @@ function navigateTo(page) {
   if (page === 'savings') renderSavings();
   if (page === 'goals') renderGoals();
   if (page === 'planning') renderPlanning();
+  if (page === 'health') renderHealth();
+  if (page === 'emotional') renderEmotional();
+  if (page === 'quests') renderQuests();
+  if (page === 'anomalies') renderAnomalies();
 }
 
 // ============================================
@@ -110,6 +131,8 @@ function initDashboard() {}
 
 async function refreshAll() {
   await refreshDashboard();
+  renderHealth();
+  renderQuests();
 }
 
 async function refreshDashboard() {
@@ -185,6 +208,15 @@ async function refreshDashboard() {
 
   // Budget alerts
   renderBudgetAlerts(expenseByCat);
+
+  // Streak
+  renderStreakStat(expenses, allExpenses);
+
+  // Dashboard widgets
+  renderDashHealthWidget(income, expenses);
+  renderDashStreakWidget(expenses);
+  renderDashSkipWidget(expenseByCat, allExpenses);
+  renderDashQuestWidget();
 }
 
 async function renderBudgetAlerts(expenseByCat) {
@@ -271,7 +303,7 @@ async function renderExpenses() {
   empty.style.display = 'none';
   tbody.innerHTML = records.map(r => `
     <tr>
-      <td><strong>${r.category}</strong></td>
+      <td><strong>${r.category}</strong>${r.mood ? ` <span style="font-size:1.2em">${getMoodEmoji(r.mood)}</span>` : ''}</td>
       <td style="color:var(--danger);font-weight:600">${formatCurrency(r.amount)}</td>
       <td>${formatDate(r.date)}</td>
       <td><span class="badge ${r.type === 'Personal' ? 'badge-warning' : 'badge-info'}">${r.type || 'Business'}</span></td>
@@ -642,6 +674,58 @@ function openModal(type, data = null) {
           <label>Note (Optional)</label>
           <input type="text" id="formNote" class="input" placeholder="Any note..." value="${data ? data.note || '' : ''}">
         </div>
+        <div class="form-group">
+          <label>How were you feeling? (Optional)</label>
+          <div class="mood-selector" id="moodSelector">
+            <button class="mood-btn" data-mood="happy" title="Happy">😊</button>
+            <button class="mood-btn" data-mood="sad" title="Sad">😢</button>
+            <button class="mood-btn" data-mood="anxious" title="Anxious">😰</button>
+            <button class="mood-btn" data-mood="angry" title="Angry">😡</button>
+            <button class="mood-btn" data-mood="neutral" title="Neutral">😐</button>
+            <button class="mood-btn" data-mood="excited" title="Excited">🤩</button>
+            <button class="mood-btn" data-mood="tired" title="Tired">😴</button>
+          </div>
+          <input type="hidden" id="formMood" value="">
+        </div>
+      `;
+      break;
+
+    case 'journalEntry':
+      title.textContent = 'Add Mood Journal Entry';
+      editingStore = 'emotionalJournal';
+      body.innerHTML = `
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="formDate" class="input" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="formCategory" class="input">
+            <option value="Food">Food</option><option value="Shopping">Shopping</option><option value="Entertainment">Entertainment</option>
+            <option value="Transport">Transport</option><option value="Healthcare">Healthcare</option><option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input type="number" id="formAmount" class="input" placeholder="Amount spent">
+        </div>
+        <div class="form-group">
+          <label>How were you feeling? *</label>
+          <div class="mood-selector" id="moodSelector">
+            <button class="mood-btn" data-mood="happy" title="Happy">😊</button>
+            <button class="mood-btn" data-mood="sad" title="Sad">😢</button>
+            <button class="mood-btn" data-mood="anxious" title="Anxious">😰</button>
+            <button class="mood-btn" data-mood="angry" title="Angry">😡</button>
+            <button class="mood-btn" data-mood="neutral" title="Neutral">😐</button>
+            <button class="mood-btn" data-mood="excited" title="Excited">🤩</button>
+            <button class="mood-btn" data-mood="tired" title="Tired">😴</button>
+          </div>
+          <input type="hidden" id="formMood" value="">
+        </div>
+        <div class="form-group">
+          <label>Note</label>
+          <textarea id="formNote" class="input textarea" placeholder="What happened?"></textarea>
+        </div>
       `;
       break;
 
@@ -745,6 +829,9 @@ function openModal(type, data = null) {
       break;
   }
 
+  // Mood selector init
+  initMoodSelector(body, data);
+
   // Save handler
   saveBtn.onclick = async () => {
     await saveFormData(type);
@@ -756,6 +843,7 @@ function openModal(type, data = null) {
       case 'party': renderParties(); break;
       case 'savingsGoal': renderSavings(); break;
       case 'goal': renderGoals(); break;
+      case 'journalEntry': renderEmotional(); refreshDashboard(); break;
     }
   };
 
@@ -792,9 +880,16 @@ async function saveFormData(type) {
         type: document.getElementById('formType').value,
         note: document.getElementById('formNote').value.trim()
       };
+      data.mood = document.getElementById('formMood')?.value || '';
       if (!data.category || !data.amount) { showToast('Please fill required fields', 'error'); return; }
       if (editingId) { data.id = editingId; await updateRecord('expenses', data); }
       else await addRecord('expenses', data);
+      if (data.mood) {
+        try {
+          await addRecord('emotionalJournal', { date: data.date, amount: data.amount, category: data.category, mood: data.mood, note: data.note || '' });
+        } catch(e) {}
+      }
+      await runAnomalyDetection();
       showToast(editingId ? 'Expense updated' : 'Expense added', 'success');
       break;
     }
@@ -845,6 +940,19 @@ async function saveFormData(type) {
       showToast(editingId ? 'Goal updated' : 'Goal added', 'success');
       break;
     }
+    case 'journalEntry': {
+      const data = {
+        date: document.getElementById('formDate').value,
+        category: document.getElementById('formCategory').value,
+        amount: Number(document.getElementById('formAmount').value) || 0,
+        mood: document.getElementById('formMood')?.value || 'neutral',
+        note: document.getElementById('formNote').value.trim()
+      };
+      if (!data.mood) { showToast('Please select a mood', 'error'); return; }
+      try { await addRecord('emotionalJournal', data); } catch(e) { lsSet('emotionalJournal', [...lsGet('emotionalJournal'), data]); }
+      showToast('Journal entry saved!', 'success');
+      break;
+    }
   }
 }
 
@@ -856,7 +964,7 @@ async function editRecord(store, id) {
   const record = await getRecord(store, id);
   if (!record) { showToast('Record not found', 'error'); return; }
 
-  const typeMap = { 'income': 'income', 'expenses': 'expense', 'budgets': 'budget', 'parties': 'party', 'goals': 'goal' };
+  const typeMap = { 'income': 'income', 'expenses': 'expense', 'budgets': 'budget', 'parties': 'party', 'goals': 'goal', 'emotionalJournal': 'journalEntry' };
   openModal(typeMap[store] || 'income', record);
 }
 
@@ -870,6 +978,7 @@ async function deleteAndRefresh(store, id) {
     case 'expenses': renderExpenses(); refreshDashboard(); break;
     case 'parties': renderParties(); break;
     case 'goals': renderGoals(); break;
+    case 'emotionalJournal': renderEmotional(); break;
   }
 }
 
@@ -899,4 +1008,243 @@ function updateMobileDate() {
   const el = document.getElementById('mobileDate');
   const d = new Date();
   el.textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// ============================================
+// DASHBOARD WIDGETS (NEW)
+// ============================================
+
+function renderStreakStat(expenses) {
+  const today = new Date().toISOString().split('T')[0];
+  let days = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const dayExp = expenses.filter(e => e.date === dateStr);
+    if (dayExp.length > 0) days++; else break;
+  }
+  const el = document.getElementById('statStreak'); if (el) el.textContent = days + ' days';
+}
+
+async function renderDashHealthWidget(income, expenses) {
+  const totalInc = income.reduce((s,i)=>s+Number(i.amount),0);
+  const totalExp = expenses.reduce((s,e)=>s+Number(e.amount),0);
+  const savingsRate = totalInc > 0 ? Math.min(100,((totalInc-totalExp)/totalInc)*100) : 0;
+  const score = Math.round(savingsRate * 0.6 + 30);
+
+  const el = document.getElementById('dashHealthScore'); if(!el) return;
+  el.textContent = score;
+  const fill = document.getElementById('dashHealthFill'); if(!fill) return;
+  const circ = 2*Math.PI*42;
+  fill.setAttribute('stroke-dasharray', circ);
+  fill.setAttribute('stroke-dashoffset', circ - (score/100)*circ);
+  fill.setAttribute('stroke', score>=80?'#22c55e':score>=60?'#3b82f6':score>=40?'#f59e0b':'#ef4444');
+  const label = document.getElementById('dashHealthLabel'); if(label) label.textContent = score>=80?'Excellent':score>=60?'Good':score>=40?'Fair':'Poor';
+}
+
+async function renderDashStreakWidget(expenses) {
+  const el = document.getElementById('dashFlame'); if(!el) return;
+  let streak = 0;
+  for (let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);const s=d.toISOString().split('T')[0];if(expenses.some(e=>e.date===s)) streak++;else break;}
+  el.parentElement.querySelector('.streak-count').textContent = streak;
+  el.style.opacity = streak>0 ? '1':'0.3';
+  document.getElementById('dashStreakLabel').textContent = streak>=7?'Keep it up!':streak>=3?'Getting there':'Start tracking';
+}
+
+async function renderDashSkipWidget(expenseByCat, allExpenses) {
+  const container = document.getElementById('skipSuggestion'); if(!container) return;
+  const prevMonth = new Date(); prevMonth.setMonth(prevMonth.getMonth()-1);
+  const pmKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}-`;
+  const prevExp = allExpenses.filter(e=>e.date.startsWith(pmKey));
+  const prevByCat={}; prevExp.forEach(e=>{prevByCat[e.category]=(prevByCat[e.category]||0)+Number(e.amount);});
+
+  let bestSkip = null;
+  for(const [cat,amt] of Object.entries(expenseByCat)){const prev=prevByCat[cat]||0;if(prev>amt&&(prev-amt)>100){if(!bestSkip||(prev-amt)>(bestSkip.prev-bestSkip.curr)) bestSkip={cat,curr:amt,prev};}}
+  if(bestSkip){const diff=Math.round(bestSkip.prev-bestSkip.curr);container.innerHTML=`<div class='skip-suggestion'><i class='fa-solid fa-lightbulb'></i> You spent <strong>${formatCurrency(diff)}</strong> less on <strong>${bestSkip.cat}</strong> vs last month! <div class='skip-amount'>Save ${formatCurrency(Math.round(diff*0.7))}?</div><button class='btn btn-sm btn-primary' style='margin-top:8px' onclick="window.navigateTo('savings')">Save It</button></div>`;}
+  else{container.innerHTML='<div class="skip-suggestion" style="opacity:0.6"><i class="fa-solid fa-chart-line"></i> Add more expenses to see saving opportunities</div>';}
+}
+
+async function renderDashQuestWidget() {
+  const el = document.getElementById('questMiniList'); if(!el) return;
+  let quests = []; try { quests = await getAllRecords('quests'); } catch(e){quests=DEFAULT_QUESTS;}
+  const active = quests.filter(q=>!q.completed).slice(0,3);
+  el.innerHTML = active.length ? active.map(q=>`<div class='quest-mini-item'><span class='quest-mini-name'>${q.title}</span><span class='quest-mini-xp'>+${q.xpReward} XP</span></div>`).join('') : '<div class="quest-mini-item" style="color:var(--text-muted)">No active quests</div>';
+}
+
+// ============================================
+// FINANCIAL HEALTH PAGE (NEW)
+// ============================================
+
+function initHealth() {}
+
+async function renderHealth() {
+  const {from,to}=getMonthRange('current');
+  const income = (await getAllRecords('income')).filter(i=>i.date>=from&&i.date<=to);
+  const expenses = (await getAllRecords('expenses')).filter(e=>e.date>=from&&e.date<=to);
+  const totalInc = income.reduce((s,i)=>s+Number(i.amount),0);
+  const totalExp = expenses.reduce((s,e)=>s+Number(e.amount),0);
+  const budgets = await getAllRecords('budgets');
+
+  const savingsRate = totalInc>0?Math.min(100,((totalInc-totalExp)/totalInc)*100):0;
+  const emergencyFund = 50;
+  const expenseByCat={};expenses.forEach(e=>{expenseByCat[e.category]=(expenseByCat[e.category]||0)+Number(e.amount);});
+  const overCats = budgets.filter(b=>(expenseByCat[b.category]||0)>Number(b.amount)).length;
+  const budgetAdherence = budgets.length?Math.round(((budgets.length-overCats)/budgets.length)*100):50;
+  const debtors = (await getAllRecords('parties')).filter(p=>p.type==='creditor'&&p.status!=='Paid');
+  const totalDebt = debtors.reduce((s,d)=>s+Number(d.amount),0);
+  const debtRatio = totalInc>0?Math.max(0,100-(totalDebt/(totalInc*3))*100):50;
+
+  const metrics = {savingsRate,budgetAdherence,emergencyFund,debtRatio,investmentHealth:50,spendingConsistency:60};
+  const weights = {savingsRate:0.25,emergencyFund:0.2,budgetAdherence:0.2,debtRatio:0.15,investmentHealth:0.1,spendingConsistency:0.1};
+  const score = Math.round(Object.entries(weights).reduce((s,[k,w])=>s+(metrics[k]||0)*w,0));
+
+  await updateRecord('healthMetrics',{id:1,overallScore:score,lastUpdated:new Date().toISOString()}).catch(()=>{});
+
+  const gauge = document.getElementById('healthMainScore'); if(gauge) gauge.textContent = score;
+  const grade = document.getElementById('healthGrade'); if(grade){grade.textContent=score>=80?'Excellent':score>=60?'Good':score>=40?'Fair':'Needs Work';grade.style.color=score>=80?'var(--success)':score>=60?'var(--accent)':score>=40?'var(--warning)':'var(--danger)';}
+  const fill = document.getElementById('healthMainFill'); if(fill){const c=2*Math.PI*82;fill.setAttribute('stroke-dasharray',c);fill.setAttribute('stroke-dashoffset',c-(score/100)*c);fill.setAttribute('stroke',score>=80?'var(--success)':score>=60?'var(--accent)':score>=40?'var(--warning)':'var(--danger)');}
+
+  const items = [{id:'savingsRate',name:'Savings Rate',score:savingsRate,desc:'% of income saved'},{id:'budgetAdherence',name:'Budget Adherence',score:budgetAdherence,desc:'Categories within budget'},{id:'emergencyFund',name:'Emergency Fund',score:emergencyFund,desc:'Months of expenses covered'},{id:'debtRatio',name:'Debt Management',score:debtRatio,desc:'Debt-to-income health'},{id:'investmentHealth',name:'Investment Health',score:50,desc:'Portfolio diversification'},{id:'spendingConsistency',name:'Spending Consistency',score:60,desc:'Month-over-month stability'}];
+  const breakdown = document.getElementById('healthBreakdown'); if(breakdown) breakdown.innerHTML = items.map(m=>`<div class='health-factor'><div class='factor-header'><span class='factor-name'>${m.name}</span><span class='factor-score' style='color:${m.score>=80?'var(--success)':m.score>=60?'var(--accent)':m.score>=40?'var(--warning)':'var(--danger)'}'>${Math.round(m.score)}</span></div><div class='progress-bar'><div class='progress-fill ${m.score>=80?'safe':m.score>=60?'':m.score>=40?'warning':'danger'}' style='width:${m.score}%'></div></div><div class='factor-desc'>${m.desc}</div></div>`).join('');
+}
+
+// ============================================
+// EMOTIONAL JOURNAL PAGE (NEW)
+// ============================================
+
+function initEmotional() {
+  const btn = document.getElementById('btnAddJournalEntry');
+  if(btn) btn.addEventListener('click',()=>openModal('journalEntry'));
+}
+
+async function renderEmotional() {
+  let entries=[];try{entries=await getAllRecords('emotionalJournal');}catch(e){entries=lsGet('emotionalJournal');}
+  entries.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const stats = {total:entries.length,moods:{},biggestAmount:0,biggestEntry:null};
+  entries.forEach(e=>{stats.moods[e.mood]=(stats.moods[e.mood]||0)+1;if(Number(e.amount)>stats.biggestAmount){stats.biggestAmount=Number(e.amount);stats.biggestEntry=e;}});
+  const topMood = Object.entries(stats.moods).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('emoTotalEntries').textContent = stats.total;
+  document.getElementById('emoTopMood').textContent = topMood ? `${getMoodEmoji(topMood[0])} ${getMoodLabel(topMood[0])}` : '—';
+  document.getElementById('emoTopMoodCount').textContent = topMood ? `${topMood[1]} times` : '';
+  document.getElementById('emoBiggest').textContent = stats.biggestEntry ? formatCurrency(stats.biggestAmount) : '—';
+
+  const tbody = document.getElementById('emoTableBody');
+  if(tbody) tbody.innerHTML = entries.length ? entries.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.category||'General'}</td><td style='font-weight:600'>${formatCurrency(e.amount)}</td><td style='font-size:1.5em'>${getMoodEmoji(e.mood)}</td><td>${e.note||'—'}</td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">No journal entries yet. Add your first one!</td></tr>';
+  document.getElementById('emoEmpty').style.display = entries.length?'none':'block';
+
+  const moodCat={};entries.forEach(e=>{if(!moodCat[e.mood])moodCat[e.mood]={};moodCat[e.mood][e.category||'Other']=(moodCat[e.mood][e.category||'Other']||0)+Number(e.amount);});
+  const patterns = document.getElementById('emoPatterns');
+  if(patterns) patterns.innerHTML = Object.entries(moodCat).slice(0,4).map(([mood,cats])=>`<div class='pattern-card'><h4>${getMoodEmoji(mood)} When ${getMoodLabel(mood)}</h4>${Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([cat,amt])=>`<div class='pattern-item'><span>${cat}</span><span>${formatCurrency(amt)}</span></div>`).join('')}</div>`).join('') || '<div class="empty-state">Log more entries to see patterns</div>';
+}
+
+// ============================================
+// QUESTS & REWARDS PAGE (NEW)
+// ============================================
+
+async function initQuests() {
+  let quests=[];try{quests=await getAllRecords('quests');}catch(e){quests=[];}
+  if(!quests.length){for(const q of DEFAULT_QUESTS){try{await addRecord('quests',q);}catch(e){}};}
+  let progress=null;try{progress=await getRecord('userProgress',1);}catch(e){progress=null;}
+  if(!progress){await updateRecord('userProgress',{id:1,level:1,xp:0,totalXp:0,streak:0,lastActiveDate:'',badgesUnlocked:[]}).catch(()=>{});}
+}
+
+async function renderQuests() {
+  let quests=[];try{quests=await getAllRecords('quests');}catch(e){quests=[];}
+  let progress={level:1,xp:0,totalXp:0,streak:0,badgesUnlocked:[]};try{const p=await getRecord('userProgress',1);if(p)progress=p;}catch(e){}
+
+  const level = getLevelFromXp(progress.totalXp||0);
+  const nextXp = getXpForNextLevel(progress.totalXp||0);
+  const curXp = getCurrentLevelXp(progress.totalXp||0);
+  const xpPct = nextXp>curXp?((progress.totalXp-curXp)/(nextXp-curXp))*100:100;
+
+  document.getElementById('questLevel').textContent = level;
+  const xpBar=document.getElementById('questXpBar'); if(xpBar)xpBar.style.width=xpPct+'%';
+  document.getElementById('questXpText').textContent = `${progress.totalXp||0}/${nextXp} XP`;
+
+  const activeQ = quests.filter(q=>!q.completed);
+  const doneQ = quests.filter(q=>q.completed);
+  document.getElementById('activeQuests').innerHTML = activeQ.length ? activeQ.map(q=>`<div class='quest-card'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>+${q.xpReward} XP</span></div><div class='progress-bar'><div class='progress-fill safe' style='width:${(q.progress/(q.target||1))*100}%'></div></div><div style='font-size:0.75em;color:var(--text-muted);margin-top:4px'>${q.progress||0}/${q.target} ${q.description}</div></div>`).join(''):'<div class="empty-state">All quests completed! 🎉</div>';
+  document.getElementById('completedQuests').innerHTML = doneQ.length ? doneQ.map(q=>`<div class='quest-card completed'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>✅ +${q.xpReward} XP</span></div></div>`).join('') : '<div class="empty-state">Complete quests to see them here</div>';
+
+  const streakD = document.getElementById('streakDays'); if(streakD){let h='';for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const day=d.toLocaleDateString('en-US',{weekday:'short'});const active=i<(progress.streak||0);h+=`<div class='streak-day${active?' active':''}'>${day[0]}</div>`;}streakD.innerHTML=h;}
+  document.getElementById('questStreakCount').textContent = progress.streak||0;
+
+  const badgeGrid=document.getElementById('badgesGrid');
+  if(badgeGrid) badgeGrid.innerHTML = BADGE_DEFS.map(b=>{const unlocked=(progress.badgesUnlocked||[]).includes(b.id);return `<div class='badge-item' style='opacity:${unlocked?'1':'0.35'}'><div class='badge-icon'>${b.icon}</div><div class='badge-name'>${b.name}</div>${unlocked?'<div style="color:var(--success);font-size:0.65em">Unlocked</div>':'<div style="font-size:0.65em;color:var(--text-muted)">Locked</div>'}</div>`;}).join('');
+}
+
+// ============================================
+// SMART ALERTS / ANOMALIES PAGE (NEW)
+// ============================================
+
+async function initAnomalies() {
+  let settings = null; try{settings=await getRecord('anomalySettings',1);}catch(e){}
+  if(!settings) await updateRecord('anomalySettings',{id:1,sensitivity:3,enabled:true}).catch(()=>{});
+  const slider = document.getElementById('anomalySensitivity');
+  if(slider){slider.addEventListener('input',async()=>{await updateRecord('anomalySettings',{id:1,sensitivity:Number(slider.value),enabled:true});document.getElementById('sensitivityValue').textContent=slider.value;});}
+  const refreshBtn = document.getElementById('btnDetectAnomalies');
+  if(refreshBtn) refreshBtn.addEventListener('click', async()=>{await runAnomalyDetection();renderAnomalies();showToast('Anomaly scan complete','success');});
+}
+
+async function renderAnomalies() {
+  let anomalies=[];try{anomalies=await getAllRecords('anomalies');}catch(e){anomalies=[];}
+  anomalies.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  let settings={sensitivity:3};try{const s=await getRecord('anomalySettings',1);if(s)settings=s;}catch(e){}
+  if(document.getElementById('anomalySensitivity')) document.getElementById('anomalySensitivity').value = settings.sensitivity;
+  if(document.getElementById('sensitivityValue')) document.getElementById('sensitivityValue').textContent = settings.sensitivity;
+
+  const active = anomalies.filter(a=>!a.dismissed);
+  const list = document.getElementById('anomalyList');
+  if(list) list.innerHTML = active.length ? active.map(a=>`<div class='anomaly-item'><div class='anomaly-info'><div class='anomaly-category'>${a.category}</div><div class='anomaly-detail'>Expected: ${formatCurrency(a.expectedAmount)} → Actual: ${formatCurrency(a.actualAmount)} on ${formatDate(a.date)}</div></div><div class='anomaly-deviation ${a.deviationPercent>0?'up':'down'}'>${a.deviationPercent>0?'+':''}${Math.round(a.deviationPercent)}%</div><div class='anomaly-actions'><button class='btn btn-secondary btn-sm' onclick='dismissAnomaly(${a.id})'>Dismiss</button><button class='btn btn-primary btn-sm' onclick='window.navigateTo("expenses")'>Investigate</button></div></div>`).join('') : '<div class="empty-state">No anomalies detected. Keep tracking expenses!</div>';
+  document.getElementById('anomalyEmpty').style.display = active.length?'none':'block';
+}
+
+async function dismissAnomaly(id){await updateRecord('anomalies',{...await getRecord('anomalies',id),dismissed:true});renderAnomalies();showToast('Anomaly dismissed','info');}
+
+async function runAnomalyDetection(){
+  let settings={sensitivity:3};try{const s=await getRecord('anomalySettings',1);if(s)settings=s;}catch(e){}
+  const allExp=await getAllRecords('expenses');
+  const {from,to}=getMonthRange('current');
+  const curMonths=[];for(let i=0;i<3;i++){const d=new Date();d.setMonth(d.getMonth()-i);curMonths.push({from:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`,to:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-31`});}
+
+  const catByMonth={};curMonths.forEach(m=>{allExp.filter(e=>e.date>=m.from&&e.date<=m.to).forEach(e=>{if(!catByMonth[e.category])catByMonth[e.category]={};const k=m.from.substring(0,7);catByMonth[e.category][k]=(catByMonth[e.category][k]||0)+Number(e.amount);});});
+
+  const threshold = [0,50,35,25,18,12][settings.sensitivity]||25;
+  const currentMonth = curMonths[0].from.substring(0,7);
+  for(const [cat,months] of Object.entries(catByMonth)){
+    const pastKeys = Object.keys(months).filter(k=>k!==currentMonth);
+    if(pastKeys.length<2) continue;
+    const avgPast = pastKeys.reduce((s,k)=>s+months[k],0)/pastKeys.length;
+    if(avgPast<200) continue;
+    const current = months[currentMonth]||0;
+    const deviation = avgPast>0?((current-avgPast)/avgPast)*100:0;
+    if(Math.abs(deviation)>=threshold){
+      await addRecord('anomalies',{date:new Date().toISOString().split('T')[0],category:cat,expectedAmount:Math.round(avgPast),actualAmount:Math.round(current),deviationPercent:Math.round(deviation),dismissed:false}).catch(()=>{});
+    }
+  }
+}
+
+// ============================================
+// MOOD SELECTOR INIT (attached to modal)
+// ============================================
+
+function initMoodSelector(body, data) {
+  const moodBtns = body.querySelectorAll('.mood-btn');
+  if (!moodBtns.length) return;
+  moodBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      moodBtns.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const moodInput = document.getElementById('formMood');
+      if (moodInput) moodInput.value = btn.dataset.mood;
+    });
+  });
+  if (data && data.mood) {
+    const existingBtn = body.querySelector(`[data-mood="${data.mood}"]`);
+    if (existingBtn) existingBtn.classList.add('selected');
+    const moodInput = document.getElementById('formMood');
+    if (moodInput) moodInput.value = data.mood;
+  }
 }

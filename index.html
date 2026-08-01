@@ -11,6 +11,511 @@
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ============================================ *
+     * NEW FEATURE STYLES
+     * ============================================ */
+
+    /* --- Dashboard Widgets --- */
+    .dashboard-widgets {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .widget-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      transition: var(--transition);
+    }
+    .widget-card:hover { border-color: var(--accent); }
+    .widget-card .widget-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .widget-card .widget-title {
+      font-size: 0.85em;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .widget-card .widget-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1em;
+    }
+
+    /* Health score gauge */
+    .gauge-circle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .gauge-circle svg { width: 100px; height: 100px; transform: rotate(-90deg); }
+    .gauge-circle .gauge-bg {
+      fill: none; stroke: var(--bg-tertiary); stroke-width: 8;
+    }
+    .gauge-circle .gauge-fill {
+      fill: none; stroke-width: 8; stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease;
+    }
+    .gauge-circle .gauge-text {
+      font-size: 1.6em; font-weight: 800;
+    }
+    .gauge-circle .gauge-label {
+      font-size: 0.75em; color: var(--text-muted);
+    }
+
+    /* Streak display */
+    .streak-display {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .streak-flame {
+      font-size: 2.8em;
+      animation: flamePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes flamePulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+    .streak-info .streak-count {
+      font-size: 2em; font-weight: 800;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .streak-info .streak-label {
+      font-size: 0.8em; color: var(--text-muted);
+    }
+    .streak-detail {
+      font-size: 0.78em; color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Smart skip card */
+    .smart-skip {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .skip-suggestion {
+      background: rgba(139, 92, 246, 0.08);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: var(--radius);
+      padding: 12px;
+      font-size: 0.85em;
+      color: var(--text-secondary);
+    }
+    .skip-suggestion i { color: #8b5cf6; margin-right: 6px; }
+    .skip-amount {
+      font-weight: 700;
+      color: var(--success);
+      font-size: 1.1em;
+      margin-top: 4px;
+    }
+
+    /* Quest mini */
+    .quest-mini { display: flex; flex-direction: column; gap: 10px; }
+    .quest-mini-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+      font-size: 0.85em;
+    }
+    .quest-mini-item:last-child { border-bottom: none; }
+    .quest-mini-name { font-weight: 500; }
+    .quest-mini-xp { color: var(--warning); font-weight: 600; font-size: 0.8em; }
+
+    /* --- Streak Stat Card --- */
+    .streak-card .stat-icon { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .streak-card .stat-value {
+      font-size: 1.4em;
+      background: var(--gradient-3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ============================================ *
+     * FINANCIAL HEALTH PAGE
+     * ============================================ */
+    .health-overview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .health-big-gauge { text-align: center; }
+    .health-big-gauge svg { width: 180px; height: 180px; transform: rotate(-90deg); }
+    .health-big-gauge .gauge-fill {
+      fill: none; stroke-width: 10; stroke-linecap: round;
+      transition: stroke-dashoffset 1s ease, stroke 0.4s ease;
+    }
+    .health-big-gauge .gauge-bg {
+      fill: none; stroke: var(--bg-tertiary); stroke-width: 10;
+    }
+    .health-big-gauge .gauge-inner {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%); text-align: center;
+    }
+    .health-big-gauge .gauge-score {
+      font-size: 2.8em; font-weight: 900; line-height: 1;
+    }
+    .health-big-gauge .gauge-grade {
+      font-size: 1em; font-weight: 600; color: var(--text-secondary);
+    }
+    .health-summary {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .health-summary h3 { font-size: 0.9em; color: var(--text-muted); font-weight: 500; }
+    .health-summary .grade-row {
+      font-size: 0.85em; display: flex; gap: 12px;
+      padding: 5px 0;
+    }
+    .grade-dot {
+      width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+    }
+
+    /* Health breakdown */
+    .health-breakdown {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .health-factor {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+    .health-factor .factor-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .health-factor .factor-name { font-weight: 600; font-size: 0.9em; }
+    .health-factor .factor-score {
+      font-weight: 700; font-size: 1.1em;
+    }
+    .health-factor .factor-desc {
+      font-size: 0.75em; color: var(--text-muted); margin-top: 6px;
+    }
+
+    /* ============================================ *
+     * EMOTIONAL JOURNAL PAGE
+     * ============================================ */
+    .emotional-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .emo-stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      text-align: center;
+    }
+    .emo-stat-card .emo-stat-value {
+      font-size: 1.8em; font-weight: 800;
+    }
+    .emo-stat-card .emo-stat-label {
+      font-size: 0.75em; color: var(--text-muted); margin-top: 4px;
+    }
+    .emo-stat-card .emo-stat-icon {
+      font-size: 1.8em; margin-bottom: 6px;
+    }
+
+    /* Journal entries */
+    .journal-entries {
+      display: flex; flex-direction: column; gap: 12px;
+      margin-bottom: 24px;
+    }
+    .journal-entry {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex; align-items: center; gap: 16px;
+      transition: var(--transition);
+    }
+    .journal-entry:hover { border-color: var(--accent); }
+    .journal-mood {
+      font-size: 2em; flex-shrink: 0;
+    }
+    .journal-info { flex: 1; }
+    .journal-info .journal-date {
+      font-size: 0.75em; color: var(--text-muted);
+    }
+    .journal-info .journal-category {
+      font-weight: 600; font-size: 0.9em; margin-top: 2px;
+    }
+    .journal-info .journal-note {
+      font-size: 0.82em; color: var(--text-secondary); margin-top: 2px;
+    }
+    .journal-amount {
+      font-weight: 700; font-size: 1em; flex-shrink: 0;
+    }
+
+    /* Pattern section */
+    .pattern-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .pattern-section h3 {
+      font-size: 1em; font-weight: 600; margin-bottom: 14px;
+    }
+    .pattern-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 0.88em;
+    }
+    .pattern-item:last-child { border-bottom: none; }
+
+    /* Mood selector */
+    .mood-selector {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .mood-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      font-size: 1.3em;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mood-btn:hover { border-color: var(--accent); background: var(--bg-tertiary); }
+    .mood-btn.selected {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      transform: scale(1.15);
+    }
+
+    /* ============================================ *
+     * QUESTS & REWARDS PAGE
+     * ============================================ */
+    .level-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 24px;
+    }
+    .level-badge-circle {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: var(--gradient-1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2em; font-weight: 900;
+      flex-shrink: 0;
+    }
+    .level-info { flex: 1; }
+    .level-info .level-title {
+      font-weight: 700; font-size: 1.2em;
+    }
+    .level-info .level-subtitle {
+      font-size: 0.8em; color: var(--text-muted); margin-top: 2px;
+    }
+    .level-bar { margin-top: 10px; }
+    .level-xp { display: flex; justify-content: space-between; font-size: 0.75em; color: var(--text-muted); margin-top: 4px; }
+
+    /* Quests list */
+    .quests-section { margin-bottom: 24px; }
+    .quests-section h3 {
+      font-size: 1.05em; font-weight: 600; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .quest-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 10px;
+      transition: var(--transition);
+    }
+    .quest-card:hover { border-color: var(--accent); }
+    .quest-card.completed { opacity: 0.7; border-color: var(--success); }
+    .quest-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2em; flex-shrink: 0;
+    }
+    .quest-icon.daily { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .quest-icon.weekly { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .quest-info { flex: 1; }
+    .quest-info .quest-name { font-weight: 600; font-size: 0.9em; }
+    .quest-info .quest-desc { font-size: 0.78em; color: var(--text-muted); margin-top: 2px; }
+    .quest-reward {
+      text-align: right; flex-shrink: 0;
+    }
+    .quest-reward .xp-badge {
+      background: rgba(245,158,11,0.15);
+      color: var(--warning);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75em; font-weight: 600;
+    }
+    .quest-progress-mini {
+      width: 80px; margin-top: 4px;
+    }
+
+    /* Badges grid */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .badge-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 12px;
+      text-align: center;
+      transition: var(--transition);
+    }
+    .badge-item:hover { border-color: var(--accent); }
+    .badge-item.locked { opacity: 0.4; }
+    .badge-item .badge-icon {
+      font-size: 2.2em; margin-bottom: 8px;
+    }
+    .badge-item .badge-name {
+      font-size: 0.78em; font-weight: 600;
+    }
+    .badge-item .badge-desc {
+      font-size: 0.7em; color: var(--text-muted); margin-top: 2px;
+    }
+
+    /* Activity log */
+    .activity-log { margin-bottom: 24px; }
+    .activity-log h3 {
+      font-size: 1.05em; font-weight: 600; margin-bottom: 14px;
+    }
+    .activity-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 0.85em;
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .activity-dot.xp { background: var(--warning); }
+    .activity-dot.quest { background: var(--accent); }
+    .activity-dot.badge { background: #8b5cf6; }
+    .activity-time { margin-left: auto; color: var(--text-muted); font-size: 0.78em; }
+
+    /* ============================================ *
+     * SMART ALERTS / ANOMALIES PAGE
+     * ============================================ */
+    .anomaly-settings {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 20px;
+      flex-wrap: wrap;
+    }
+    .anomaly-settings label {
+      font-weight: 600; font-size: 0.9em; white-space: nowrap;
+    }
+    .sensitivity-slider {
+      flex: 1; min-width: 200px;
+    }
+    .sensitivity-slider input[type="range"] {
+      width: 100%; accent-color: var(--accent);
+    }
+    .sensitivity-labels {
+      display: flex; justify-content: space-between;
+      font-size: 0.7em; color: var(--text-muted); margin-top: 4px;
+    }
+    .sensitivity-value {
+      font-weight: 700; color: var(--accent); font-size: 0.95em;
+      min-width: 40px; text-align: center;
+    }
+
+    /* Anomaly list */
+    .anomaly-list { display: flex; flex-direction: column; gap: 12px; }
+    .anomaly-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      transition: var(--transition);
+    }
+    .anomaly-card:hover { border-color: var(--accent); }
+    .anomaly-card.dismissed { opacity: 0.5; border-color: var(--bg-tertiary); }
+    .anomaly-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .anomaly-header .anomaly-category {
+      font-weight: 600; font-size: 0.95em;
+    }
+    .anomaly-header .anomaly-date {
+      font-size: 0.78em; color: var(--text-muted);
+    }
+    .anomaly-severity {
+      font-size: 0.72em; font-weight: 700; padding: 3px 10px;
+      border-radius: 12px; text-transform: uppercase;
+    }
+    .anomaly-severity.high { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .anomaly-severity.medium { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .anomaly-severity.low { background: rgba(6,182,212,0.15); color: var(--info); }
+    .anomaly-detail {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin-bottom: 14px; font-size: 0.85em;
+    }
+    .anomaly-detail-item { text-align: center; }
+    .anomaly-detail-item .detail-label {
+      font-size: 0.75em; color: var(--text-muted);
+    }
+    .anomaly-detail-item .detail-value { font-weight: 700; margin-top: 2px; }
+    .anomaly-actions { display: flex; gap: 8px; }
+    .anomaly-actions .btn { padding: 6px 14px; font-size: 0.8em; }
+
+    /* ============================================ *
+     * RESPONSIVE ADJUSTMENTS
+     * ============================================ */
+    @media (max-width: 1200px) {
+      .dashboard-widgets { grid-template-columns: 1fr; }
+      .health-breakdown { grid-template-columns: 1fr; }
+      .emotional-stats { grid-template-columns: repeat(2, 1fr); }
+      .badges-grid { grid-template-columns: repeat(2, 1fr); }
+      .anomaly-detail { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .health-overview { flex-direction: column; gap: 24px; }
+      .health-big-gauge svg { width: 140px; height: 140px; }
+      .health-big-gauge .gauge-score { font-size: 2.2em; }
+      .level-header { flex-direction: column; text-align: center; }
+      .emotional-stats { grid-template-columns: 1fr 1fr; }
+      .badges-grid { grid-template-columns: repeat(2, 1fr); }
+      .anomaly-detail { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    }
+  </style>
 </head>
 <body>
   <!-- Sidebar -->
@@ -56,6 +561,22 @@
       <a href="#planning" class="nav-item" data-page="planning">
         <i class="fa-solid fa-calendar-check"></i>
         <span>Next Month Plan</span>
+      </a>
+      <a href="#health" class="nav-item" data-page="health">
+        <i class="fa-solid fa-heart-pulse"></i>
+        <span>Financial Health</span>
+      </a>
+      <a href="#emotional" class="nav-item" data-page="emotional">
+        <i class="fa-solid fa-brain"></i>
+        <span>Emotional Journal</span>
+      </a>
+      <a href="#quests" class="nav-item" data-page="quests">
+        <i class="fa-solid fa-trophy"></i>
+        <span>Quests & Rewards</span>
+      </a>
+      <a href="#anomalies" class="nav-item" data-page="anomalies">
+        <i class="fa-solid fa-magnifying-glass-chart"></i>
+        <span>Smart Alerts</span>
       </a>
     </nav>
     <div class="sidebar-footer">
@@ -124,9 +645,96 @@
             <div class="stat-change">Target: <span id="statSavingsTarget">₹0</span></div>
           </div>
         </div>
+        <div class="stat-card streak-card">
+          <div class="stat-icon"><i class="fa-solid fa-fire"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Current Streak</div>
+            <div class="stat-value" id="statStreak">0 days</div>
+            <div class="stat-change" id="statStreakDetail">Under-budget streak</div>
+          </div>
+        </div>
       </div>
+
       <!-- Budget Alerts -->
       <div class="alerts-section" id="budgetAlerts"></div>
+
+      <!-- NEW: Dashboard Widgets -->
+      <div class="dashboard-widgets">
+        <!-- Financial Health Score -->
+        <div class="widget-card" id="dashHealthWidget">
+          <div class="widget-header">
+            <span class="widget-title"><i class="fa-solid fa-heart-pulse"></i> Financial Health</span>
+            <button class="btn btn-secondary btn-sm" onclick="navigateTo('health')" style="font-size:0.72em;padding:4px 10px;">View Full</button>
+          </div>
+          <div class="gauge-circle">
+            <svg viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" class="gauge-bg"/>
+              <circle cx="60" cy="60" r="52" class="gauge-fill" id="dashHealthGauge" stroke="#22c55e" stroke-dasharray="326.73" stroke-dashoffset="120"/>
+            </svg>
+            <div class="gauge-text" id="dashHealthScore" style="color:#22c55e">72</div>
+            <div class="gauge-label">out of 100 · Good</div>
+          </div>
+        </div>
+
+        <!-- Active Streak -->
+        <div class="widget-card" id="dashStreakWidget">
+          <div class="widget-header">
+            <span class="widget-title"><i class="fa-solid fa-fire"></i> Active Streak</span>
+            <span class="badge badge-warning" id="dashStreakBadge">🔥 7 days</span>
+          </div>
+          <div class="streak-display">
+            <div class="streak-flame">🔥</div>
+            <div>
+              <div class="streak-info">
+                <div class="streak-count" id="dashStreakCount">7</div>
+                <div class="streak-label">days under budget</div>
+              </div>
+              <div class="streak-detail" id="dashStreakDetail">Best: 14 days · Keep going!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Smart Skip Suggestion -->
+        <div class="widget-card" id="dashSkipWidget">
+          <div class="widget-header">
+            <span class="widget-title"><i class="fa-solid fa-lightbulb"></i> Smart Skip</span>
+            <span class="badge badge-info">AI Tip</span>
+          </div>
+          <div class="smart-skip">
+            <div class="skip-suggestion" id="dashSkipSuggestion">
+              <i class="fa-solid fa-circle-info"></i>
+              You spent 40% less on <strong>Eating Out</strong> last month.
+            </div>
+            <div class="skip-amount" id="dashSkipAmount">Save ~₹1,200 this month</div>
+            <button class="btn btn-sm btn-primary" onclick="navigateTo('anomalies')" style="align-self:flex-start;">
+              <i class="fa-solid fa-magnifying-glass-chart"></i> See All Alerts
+            </button>
+          </div>
+        </div>
+
+        <!-- Quest Progress Mini -->
+        <div class="widget-card" id="dashQuestWidget">
+          <div class="widget-header">
+            <span class="widget-title"><i class="fa-solid fa-trophy"></i> Quest Progress</span>
+            <button class="btn btn-secondary btn-sm" onclick="navigateTo('quests')" style="font-size:0.72em;padding:4px 10px;">View All</button>
+          </div>
+          <div class="quest-mini" id="dashQuestMini">
+            <div class="quest-mini-item">
+              <span class="quest-mini-name">Log expenses daily</span>
+              <span class="quest-mini-xp">+50 XP</span>
+            </div>
+            <div class="quest-mini-item">
+              <span class="quest-mini-name">Stay under budget</span>
+              <span class="quest-mini-xp">+100 XP</span>
+            </div>
+            <div class="quest-mini-item">
+              <span class="quest-mini-name">Save ₹2,000 this week</span>
+              <span class="quest-mini-xp">+200 XP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Quick Summary -->
       <div class="summary-grid">
         <div class="summary-card">
@@ -333,6 +941,418 @@
         </div>
       </div>
     </section>
+
+    <!-- Financial Health -->
+    <section class="page" id="page-health">
+      <div class="page-header">
+        <h1><i class="fa-solid fa-heart-pulse"></i> Financial Health</h1>
+        <span class="badge badge-info" id="healthUpdateTime">Updated just now</span>
+      </div>
+      <div class="health-overview">
+        <div class="health-big-gauge" style="position:relative;display:inline-block;">
+          <svg viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="80" class="gauge-bg"/>
+            <circle cx="90" cy="90" r="80" class="gauge-fill" id="healthMainGauge" stroke="#22c55e" stroke-dasharray="502.65" stroke-dashoffset="140"/>
+          </svg>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+            <div class="gauge-score" id="healthMainScore" style="color:#22c55e">72</div>
+            <div class="gauge-grade" id="healthMainGrade">Good</div>
+          </div>
+        </div>
+        <div class="health-summary">
+          <h3>Score Breakdown</h3>
+          <div class="grade-row"><span class="grade-dot" style="background:#22c55e"></span> 80–100: Excellent</div>
+          <div class="grade-row"><span class="grade-dot" style="background:#3b82f6"></span> 60–79: Good</div>
+          <div class="grade-row"><span class="grade-dot" style="background:#f59e0b"></span> 40–59: Fair</div>
+          <div class="grade-row"><span class="grade-dot" style="background:#ef4444"></span> 0–39: Needs Attention</div>
+          <div style="margin-top:16px;font-size:0.85em;color:var(--text-secondary);">
+            Your financial health score is calculated from<br>6 key indicators of financial wellness.
+          </div>
+        </div>
+      </div>
+      <div class="health-breakdown">
+        <!-- Savings Rate -->
+        <div class="health-factor" id="factorSavingsRate">
+          <div class="factor-header">
+            <span class="factor-name"><i class="fa-solid fa-piggy-bank"></i> Savings Rate</span>
+            <span class="factor-score" style="color:#22c55e">85</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill safe" style="width:85%"></div>
+          </div>
+          <div class="factor-desc">Saving 20%+ of income</div>
+        </div>
+        <!-- Emergency Fund -->
+        <div class="health-factor" id="factorEmergencyFund">
+          <div class="factor-header">
+            <span class="factor-name"><i class="fa-solid fa-shield-halved"></i> Emergency Fund</span>
+            <span class="factor-score" style="color:#f59e0b">55</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill warning" style="width:55%"></div>
+          </div>
+          <div class="factor-desc">3-6 months of expenses covered</div>
+        </div>
+        <!-- Budget Adherence -->
+        <div class="health-factor" id="factorBudgetAdherence">
+          <div class="factor-header">
+            <span class="factor-name"><i class="fa-solid fa-wallet"></i> Budget Adherence</span>
+            <span class="factor-score" style="color:#22c55e">90</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill safe" style="width:90%"></div>
+          </div>
+          <div class="factor-desc">Staying within budget limits</div>
+        </div>
+        <!-- Debt Ratio -->
+        <div class="health-factor" id="factorDebtRatio">
+          <div class="factor-header">
+            <span class="factor-name"><i class="fa-solid fa-scale-balanced"></i> Debt Ratio</span>
+            <span class="factor-score" style="color:#22c55e">78</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill safe" style="width:78%"></div>
+          </div>
+          <div class="factor-desc">Debt-to-income ratio under 30%</div>
+        </div>
+        <!-- Investment Health -->
+        <div class="health-factor" id="factorInvestmentHealth">
+          <div class="factor-header">
+            <span class="factor-name"><i class="fa-solid fa-chart-line"></i> Investment Health</span>
+            <span class="factor-score" style="color:#f59e0b">48</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill warning" style="width:48%"></div>
+          </div>
+          <div class="factor-desc">Investing 15%+ of income</div>
+        </div>
+        <!-- Spending Consistency -->
+        <div class="health-factor" id="factorSpendingConsistency">
+          <div class="factor-header">
+            <span class="factor-name"><i class="fa-solid fa-arrow-trend-up"></i> Spending Consistency</span>
+            <span class="factor-score" style="color:#3b82f6">68</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill safe" style="width:68%"></div>
+          </div>
+          <div class="factor-desc">Low month-to-month variance</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Emotional Journal -->
+    <section class="page" id="page-emotional">
+      <div class="page-header">
+        <h1><i class="fa-solid fa-brain"></i> Emotional Journal</h1>
+        <button class="btn btn-primary" id="btnAddJournalEntry"><i class="fa-solid fa-plus"></i> Add Journal Entry</button>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="emotional-stats">
+        <div class="emo-stat-card">
+          <div class="emo-stat-icon">📝</div>
+          <div class="emo-stat-value" id="emoTotalEntries">0</div>
+          <div class="emo-stat-label">Total Entries</div>
+        </div>
+        <div class="emo-stat-card">
+          <div class="emo-stat-icon" id="emoMostCommonIcon">😊</div>
+          <div class="emo-stat-value" id="emoMostCommon">—</div>
+          <div class="emo-stat-label">Most Common Mood</div>
+        </div>
+        <div class="emo-stat-card">
+          <div class="emo-stat-icon">💸</div>
+          <div class="emo-stat-value" id="emoBiggestSpend">₹0</div>
+          <div class="emo-stat-label">Biggest Emotional Spend</div>
+        </div>
+        <div class="emo-stat-card">
+          <div class="emo-stat-icon">📊</div>
+          <div class="emo-stat-value" id="emoAvgSpend">₹0</div>
+          <div class="emo-stat-label">Avg Spend Per Entry</div>
+        </div>
+      </div>
+
+      <!-- Recent Entries -->
+      <h3 style="margin-bottom:14px;font-weight:600">Recent Journal Entries</h3>
+      <div class="journal-entries" id="journalEntriesList">
+        <div class="empty-state">No journal entries yet. Start tracking your spending emotions!</div>
+      </div>
+
+      <!-- Pattern Analysis -->
+      <div class="pattern-section">
+        <h3><i class="fa-solid fa-magnifying-glass-chart"></i> Your Spending Triggers</h3>
+        <div id="spendingTriggers">
+          <div class="pattern-item">
+            <span>No data yet</span>
+            <span style="color:var(--text-muted)">Add journal entries to see patterns</span>
+          </div>
+        </div>
+      </div>
+      <div class="pattern-section">
+        <h3><i class="fa-solid fa-arrow-right-arrow-left"></i> Mood-Purchase Correlation</h3>
+        <div id="moodCorrelation">
+          <div class="pattern-item">
+            <span>No data yet</span>
+            <span style="color:var(--text-muted)">Correlation analysis will appear here</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quests & Rewards -->
+    <section class="page" id="page-quests">
+      <div class="page-header">
+        <h1><i class="fa-solid fa-trophy"></i> Quests & Rewards</h1>
+        <span class="badge badge-warning" id="questTotalXP">0 XP</span>
+      </div>
+
+      <!-- Level & XP -->
+      <div class="level-header">
+        <div class="level-badge-circle" id="questLevelBadge">1</div>
+        <div class="level-info">
+          <div class="level-title" id="questLevelTitle">Level 1 · Finance Rookie</div>
+          <div class="level-subtitle" id="questLevelSubtitle">Earn XP by completing quests and staying on budget</div>
+          <div class="level-bar">
+            <div class="progress-bar">
+              <div class="progress-fill safe" id="questXPBar" style="width:0%"></div>
+            </div>
+            <div class="level-xp">
+              <span id="questXPCurrent">0 XP</span>
+              <span id="questXPNext">Next: 100 XP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Quests -->
+      <div class="quests-section">
+        <h3><i class="fa-solid fa-scroll"></i> Daily Quests</h3>
+        <div id="dailyQuests">
+          <div class="quest-card">
+            <div class="quest-icon daily"><i class="fa-solid fa-pen-to-square"></i></div>
+            <div class="quest-info">
+              <div class="quest-name">Log Today's Expenses</div>
+              <div class="quest-desc">Record all your spending for the day</div>
+            </div>
+            <div class="quest-reward">
+              <span class="xp-badge">+50 XP</span>
+              <div class="quest-progress-mini">
+                <div class="progress-bar">
+                  <div class="progress-fill safe" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="quest-card">
+            <div class="quest-icon daily"><i class="fa-solid fa-wallet"></i></div>
+            <div class="quest-info">
+              <div class="quest-name">Stay Under Budget</div>
+              <div class="quest-desc">Don't exceed your daily spending limit</div>
+            </div>
+            <div class="quest-reward">
+              <span class="xp-badge">+100 XP</span>
+              <div class="quest-progress-mini">
+                <div class="progress-bar">
+                  <div class="progress-fill safe" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quests-section">
+        <h3><i class="fa-solid fa-calendar-week"></i> Weekly Challenges</h3>
+        <div id="weeklyQuests">
+          <div class="quest-card">
+            <div class="quest-icon weekly"><i class="fa-solid fa-piggy-bank"></i></div>
+            <div class="quest-info">
+              <div class="quest-name">Save ₹2,000 This Week</div>
+              <div class="quest-desc">Cut unnecessary expenses and hit the target</div>
+            </div>
+            <div class="quest-reward">
+              <span class="xp-badge">+200 XP</span>
+              <div class="quest-progress-mini">
+                <div class="progress-bar">
+                  <div class="progress-fill safe" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="quest-card">
+            <div class="quest-icon weekly"><i class="fa-solid fa-chart-pie"></i></div>
+            <div class="quest-info">
+              <div class="quest-name">Review All Expenses</div>
+              <div class="quest-desc">Check and categorize all this week's transactions</div>
+            </div>
+            <div class="quest-reward">
+              <span class="xp-badge">+150 XP</span>
+              <div class="quest-progress-mini">
+                <div class="progress-bar">
+                  <div class="progress-fill safe" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Streaks -->
+      <div class="quests-section">
+        <h3><i class="fa-solid fa-fire"></i> Streaks</h3>
+        <div class="widget-card" style="margin-bottom:0;">
+          <div class="streak-display">
+            <div class="streak-flame">🔥</div>
+            <div>
+              <div class="streak-info">
+                <div class="streak-count" id="questStreakCount">0</div>
+                <div class="streak-label" id="questStreakLabel">day streak</div>
+              </div>
+              <div class="streak-detail" id="questStreakDetail">Start tracking to build a streak!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <h3 style="margin-bottom:14px;font-weight:600"><i class="fa-solid fa-medal"></i> Badges & Achievements</h3>
+      <div class="badges-grid" id="badgesGrid">
+        <div class="badge-item">
+          <div class="badge-icon">🌟</div>
+          <div class="badge-name">First Steps</div>
+          <div class="badge-desc">Log your first expense</div>
+        </div>
+        <div class="badge-item locked">
+          <div class="badge-icon">🔥</div>
+          <div class="badge-name">7-Day Streak</div>
+          <div class="badge-desc">Stay under budget for a week</div>
+        </div>
+        <div class="badge-item locked">
+          <div class="badge-icon">💰</div>
+          <div class="badge-name">Saver Pro</div>
+          <div class="badge-desc">Save ₹10,000 in a month</div>
+        </div>
+        <div class="badge-item locked">
+          <div class="badge-icon">📊</div>
+          <div class="badge-name">Data Wizard</div>
+          <div class="badge-desc">Log 100 transactions</div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="activity-log">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity</h3>
+        <div id="activityLog">
+          <div class="empty-state">Complete quests to see your activity here</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Smart Alerts / Anomalies -->
+    <section class="page" id="page-anomalies">
+      <div class="page-header">
+        <h1><i class="fa-solid fa-magnifying-glass-chart"></i> Smart Alerts</h1>
+        <span class="badge badge-info" id="anomalyCount">0 detected</span>
+      </div>
+
+      <!-- Sensitivity Settings -->
+      <div class="anomaly-settings">
+        <label><i class="fa-solid fa-sliders"></i> Detection Sensitivity</label>
+        <div class="sensitivity-slider">
+          <input type="range" id="anomalySensitivity" min="1" max="10" value="5" oninput="document.getElementById('anomalySensValue').textContent=this.value">
+          <div class="sensitivity-labels">
+            <span>Lenient</span>
+            <span>Balanced</span>
+            <span>Strict</span>
+          </div>
+        </div>
+        <div class="sensitivity-value" id="anomalySensValue">5</div>
+      </div>
+
+      <!-- Anomaly List -->
+      <div class="anomaly-list" id="anomalyList">
+        <div class="anomaly-card">
+          <div class="anomaly-header">
+            <div>
+              <span class="anomaly-category"><i class="fa-solid fa-utensils"></i> Food & Dining</span>
+              <span class="anomaly-severity high" style="margin-left:8px;">High</span>
+            </div>
+            <span class="anomaly-date">2026-07-28</span>
+          </div>
+          <div class="anomaly-detail">
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Expected</div>
+              <div class="detail-value" style="color:var(--info)">₹3,500</div>
+            </div>
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Actual</div>
+              <div class="detail-value" style="color:var(--danger)">₹6,200</div>
+            </div>
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Deviation</div>
+              <div class="detail-value" style="color:var(--danger)">+77%</div>
+            </div>
+          </div>
+          <div class="anomaly-actions">
+            <button class="btn btn-secondary btn-sm dismiss-anomaly" data-id="1"><i class="fa-solid fa-check"></i> Dismiss</button>
+            <button class="btn btn-primary btn-sm investigate-anomaly" data-id="1"><i class="fa-solid fa-magnifying-glass"></i> Investigate</button>
+          </div>
+        </div>
+        <div class="anomaly-card">
+          <div class="anomaly-header">
+            <div>
+              <span class="anomaly-category"><i class="fa-solid fa-cart-shopping"></i> Shopping</span>
+              <span class="anomaly-severity medium" style="margin-left:8px;">Medium</span>
+            </div>
+            <span class="anomaly-date">2026-07-25</span>
+          </div>
+          <div class="anomaly-detail">
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Expected</div>
+              <div class="detail-value" style="color:var(--info)">₹2,000</div>
+            </div>
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Actual</div>
+              <div class="detail-value" style="color:var(--warning)">₹3,150</div>
+            </div>
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Deviation</div>
+              <div class="detail-value" style="color:var(--warning)">+57%</div>
+            </div>
+          </div>
+          <div class="anomaly-actions">
+            <button class="btn btn-secondary btn-sm dismiss-anomaly" data-id="2"><i class="fa-solid fa-check"></i> Dismiss</button>
+            <button class="btn btn-primary btn-sm investigate-anomaly" data-id="2"><i class="fa-solid fa-magnifying-glass"></i> Investigate</button>
+          </div>
+        </div>
+        <div class="anomaly-card">
+          <div class="anomaly-header">
+            <div>
+              <span class="anomaly-category"><i class="fa-solid fa-gamepad"></i> Entertainment</span>
+              <span class="anomaly-severity low" style="margin-left:8px;">Low</span>
+            </div>
+            <span class="anomaly-date">2026-07-22</span>
+          </div>
+          <div class="anomaly-detail">
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Expected</div>
+              <div class="detail-value" style="color:var(--info)">₹1,500</div>
+            </div>
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Actual</div>
+              <div class="detail-value" style="color:var(--info)">₹1,850</div>
+            </div>
+            <div class="anomaly-detail-item">
+              <div class="detail-label">Deviation</div>
+              <div class="detail-value" style="color:var(--warning)">+23%</div>
+            </div>
+          </div>
+          <div class="anomaly-actions">
+            <button class="btn btn-secondary btn-sm dismiss-anomaly" data-id="3"><i class="fa-solid fa-check"></i> Dismiss</button>
+            <button class="btn btn-primary btn-sm investigate-anomaly" data-id="3"><i class="fa-solid fa-magnifying-glass"></i> Investigate</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- Modal -->
@@ -342,7 +1362,21 @@
         <h2 id="modalTitle">Add Entry</h2>
         <button class="modal-close" id="modalClose">&times;</button>
       </div>
-      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-body" id="modalBody">
+        <!--
+          NOTE: For expense form, JS should include a MOOD SELECTOR:
+          <div class="form-group">
+            <label>How are you feeling?</label>
+            <div class="mood-selector" id="formMood">
+              <button class="mood-btn" data-mood="happy" title="Happy">😊</button>
+              <button class="mood-btn" data-mood="sad" title="Sad">😢</button>
+              <button class="mood-btn" data-mood="anxious" title="Anxious">😰</button>
+              <button class="mood-btn" data-mood="angry" title="Angry">😡</button>
+              <button class="mood-btn" data-mood="neutral" title="Neutral">😐</button>
+            </div>
+          </div>
+        -->
+      </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="modalCancel">Cancel</button>
         <button class="btn btn-primary" id="modalSave">Save</button>
