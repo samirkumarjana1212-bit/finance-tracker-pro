@@ -189,9 +189,9 @@ async function refreshDashboard() {
   const lastExpense = allExpenses.filter(e => e.date.startsWith(pmKey)).reduce((s,e)=>s+Number(e.amount),0);
 
   document.getElementById('statIncomeChange').textContent =
-    lastIncome ? `${((totalIncome - lastIncome) / lastIncome * 100).toFixed(1)}% vs last month` : '—';
+    lastIncome ? `${((totalIncome - lastIncome) / lastIncome * 100).toFixed(1)}% vs last month` : 'â€”';
   document.getElementById('statExpenseChange').textContent =
-    lastExpense ? `${((totalExpense - lastExpense) / lastExpense * 100).toFixed(1)}% vs last month` : '—';
+    lastExpense ? `${((totalExpense - lastExpense) / lastExpense * 100).toFixed(1)}% vs last month` : 'â€”';
 
   // Savings
   const monthKey = getCurrentMonthKey();
@@ -252,7 +252,7 @@ async function renderBudgetAlerts(expenseByCat) {
       alerts.push({
         type: pct >= 100 ? 'danger' : 'warning',
         icon: pct >= 100 ? 'fa-circle-exclamation' : 'fa-triangle-exclamation',
-        msg: `${budget.category}: Spent ${formatCurrency(spent)} of ${formatCurrency(budget.amount)} (${pct.toFixed(0)}%) — ${pct >= 100 ? 'OVER BUDGET!' : 'Almost at limit!'}`
+        msg: `${budget.category}: Spent ${formatCurrency(spent)} of ${formatCurrency(budget.amount)} (${pct.toFixed(0)}%) â€” ${pct >= 100 ? 'OVER BUDGET!' : 'Almost at limit!'}`
       });
     }
   }
@@ -276,24 +276,27 @@ function initIncome() {
 
 async function renderIncome() {
   const records = await getAllRecords('income');
-  records.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const {from,to}=getViewMonthRange();
+  const filtered = records.filter(r=>r.date>=from&&r.date<=to);
+  filtered.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('incomeTotalValue').textContent=formatCurrency(filtered.reduce((s,r)=>s+Number(r.amount),0));
   const tbody = document.getElementById('incomeTableBody');
   const empty = document.getElementById('incomeEmpty');
 
-  if (records.length === 0) {
+  if (filtered.length === 0) {
     tbody.innerHTML = '';
     empty.style.display = 'block';
     return;
   }
 
   empty.style.display = 'none';
-  tbody.innerHTML = records.map(r => `
+  tbody.innerHTML = filtered.map(r => `
     <tr>
       <td><strong>${r.source}</strong></td>
       <td style="color:var(--success);font-weight:600">${formatCurrency(r.amount)}</td>
       <td>${formatDate(r.date)}</td>
       <td><span class="badge badge-info">${r.category || 'General'}</span></td>
-      <td>${r.note || '—'}</td>
+      <td>${r.note || 'â€”'}</td>
       <td>
         <button class="btn-icon edit" onclick="editRecord('income', ${r.id})" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
         <button class="btn-icon delete" onclick="deleteAndRefresh('income', ${r.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
@@ -312,24 +315,27 @@ function initExpenses() {
 
 async function renderExpenses() {
   const records = await getAllRecords('expenses');
-  records.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const {from,to}=getViewMonthRange();
+  const filtered = records.filter(r=>r.date>=from&&r.date<=to);
+  filtered.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('expenseTotalValue').textContent=formatCurrency(filtered.reduce((s,r)=>s+Number(r.amount),0));
   const tbody = document.getElementById('expenseTableBody');
   const empty = document.getElementById('expenseEmpty');
 
-  if (records.length === 0) {
+  if (filtered.length===0){
     tbody.innerHTML = '';
     empty.style.display = 'block';
     return;
   }
 
   empty.style.display = 'none';
-  tbody.innerHTML = records.map(r => `
+  tbody.innerHTML = filtered.map(r => `
     <tr>
       <td><strong>${r.category}</strong>${r.mood ? ` <span style="font-size:1.2em">${getMoodEmoji(r.mood)}</span>` : ''}</td>
       <td style="color:var(--danger);font-weight:600">${formatCurrency(r.amount)}</td>
       <td>${formatDate(r.date)}</td>
       <td><span class="badge ${r.type === 'Personal' ? 'badge-warning' : 'badge-info'}">${r.type || 'Business'}</span></td>
-      <td>${r.note || '—'}</td>
+      <td>${r.note || 'â€”'}</td>
       <td>
         <button class="btn-icon edit" onclick="editRecord('expenses', ${r.id})" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
         <button class="btn-icon delete" onclick="deleteAndRefresh('expenses', ${r.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
@@ -449,7 +455,7 @@ async function renderParties() {
             ${r.status}${overdue ? ' (Overdue)' : ''}
           </span>
         </td>
-        <td>${r.note || '—'}</td>
+        <td>${r.note || 'â€”'}</td>
         <td>
           <button class="btn-icon edit" onclick="editRecord('parties', ${r.id})" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
           ${r.status !== 'Paid' ? `<button class="btn-icon" onclick="markPartyPaid(${r.id})" title="Mark Paid" style="color:var(--success)"><i class="fa-solid fa-check-circle"></i></button>` : ''}
@@ -636,7 +642,7 @@ function openModal(type, data = null) {
           <input type="text" id="formSource" class="input" placeholder="e.g., Salary, Freelance, Business" value="${data ? data.source : ''}">
         </div>
         <div class="form-group">
-          <label>Amount (₹) *</label>
+          <label>Amount (â‚¹) *</label>
           <input type="number" id="formAmount" class="input" placeholder="Enter amount" value="${data ? data.amount : ''}">
         </div>
         <div class="form-group">
@@ -682,7 +688,7 @@ function openModal(type, data = null) {
           </select>
         </div>
         <div class="form-group">
-          <label>Amount (₹) *</label>
+          <label>Amount (â‚¹) *</label>
           <input type="number" id="formAmount" class="input" placeholder="Enter amount" value="${data ? data.amount : ''}">
         </div>
         <div class="form-group">
@@ -703,13 +709,13 @@ function openModal(type, data = null) {
         <div class="form-group">
           <label>How were you feeling? (Optional)</label>
           <div class="mood-selector" id="moodSelector">
-            <button class="mood-btn" data-mood="happy" title="Happy">😊</button>
-            <button class="mood-btn" data-mood="sad" title="Sad">😢</button>
-            <button class="mood-btn" data-mood="anxious" title="Anxious">😰</button>
-            <button class="mood-btn" data-mood="angry" title="Angry">😡</button>
-            <button class="mood-btn" data-mood="neutral" title="Neutral">😐</button>
-            <button class="mood-btn" data-mood="excited" title="Excited">🤩</button>
-            <button class="mood-btn" data-mood="tired" title="Tired">😴</button>
+            <button class="mood-btn" data-mood="happy" title="Happy">ðŸ˜Š</button>
+            <button class="mood-btn" data-mood="sad" title="Sad">ðŸ˜¢</button>
+            <button class="mood-btn" data-mood="anxious" title="Anxious">ðŸ˜°</button>
+            <button class="mood-btn" data-mood="angry" title="Angry">ðŸ˜¡</button>
+            <button class="mood-btn" data-mood="neutral" title="Neutral">ðŸ˜</button>
+            <button class="mood-btn" data-mood="excited" title="Excited">ðŸ¤©</button>
+            <button class="mood-btn" data-mood="tired" title="Tired">ðŸ˜´</button>
           </div>
           <input type="hidden" id="formMood" value="">
         </div>
@@ -732,19 +738,19 @@ function openModal(type, data = null) {
           </select>
         </div>
         <div class="form-group">
-          <label>Amount (₹)</label>
+          <label>Amount (â‚¹)</label>
           <input type="number" id="formAmount" class="input" placeholder="Amount spent">
         </div>
         <div class="form-group">
           <label>How were you feeling? *</label>
           <div class="mood-selector" id="moodSelector">
-            <button class="mood-btn" data-mood="happy" title="Happy">😊</button>
-            <button class="mood-btn" data-mood="sad" title="Sad">😢</button>
-            <button class="mood-btn" data-mood="anxious" title="Anxious">😰</button>
-            <button class="mood-btn" data-mood="angry" title="Angry">😡</button>
-            <button class="mood-btn" data-mood="neutral" title="Neutral">😐</button>
-            <button class="mood-btn" data-mood="excited" title="Excited">🤩</button>
-            <button class="mood-btn" data-mood="tired" title="Tired">😴</button>
+            <button class="mood-btn" data-mood="happy" title="Happy">ðŸ˜Š</button>
+            <button class="mood-btn" data-mood="sad" title="Sad">ðŸ˜¢</button>
+            <button class="mood-btn" data-mood="anxious" title="Anxious">ðŸ˜°</button>
+            <button class="mood-btn" data-mood="angry" title="Angry">ðŸ˜¡</button>
+            <button class="mood-btn" data-mood="neutral" title="Neutral">ðŸ˜</button>
+            <button class="mood-btn" data-mood="excited" title="Excited">ðŸ¤©</button>
+            <button class="mood-btn" data-mood="tired" title="Tired">ðŸ˜´</button>
           </div>
           <input type="hidden" id="formMood" value="">
         </div>
@@ -764,7 +770,7 @@ function openModal(type, data = null) {
           <input type="text" id="formCategory" class="input" placeholder="e.g., Food, Rent, Transport" value="${data ? data.category : ''}" ${data ? 'readonly' : ''}>
         </div>
         <div class="form-group">
-          <label>Monthly Budget (₹) *</label>
+          <label>Monthly Budget (â‚¹) *</label>
           <input type="number" id="formAmount" class="input" placeholder="Budget amount" value="${data ? data.amount : ''}">
         </div>
       `;
@@ -786,7 +792,7 @@ function openModal(type, data = null) {
           </select>
         </div>
         <div class="form-group">
-          <label>Amount (₹) *</label>
+          <label>Amount (â‚¹) *</label>
           <input type="number" id="formAmount" class="input" placeholder="Amount" value="${data ? data.amount : ''}">
         </div>
         <div class="form-group">
@@ -817,7 +823,7 @@ function openModal(type, data = null) {
       editingStore = 'savingsGoals';
       body.innerHTML = `
         <div class="form-group">
-          <label>Monthly Savings Target (₹) *</label>
+          <label>Monthly Savings Target (â‚¹) *</label>
           <input type="number" id="formTarget" class="input" placeholder="How much to save per month" value="${data ? data.monthlyTarget : ''}">
         </div>
       `;
@@ -832,7 +838,7 @@ function openModal(type, data = null) {
           <input type="text" id="formTitle" class="input" placeholder="e.g., Buy a car, Emergency fund" value="${data ? data.title : ''}">
         </div>
         <div class="form-group">
-          <label>Target Amount (₹)</label>
+          <label>Target Amount (â‚¹)</label>
           <input type="number" id="formTargetAmount" class="input" placeholder="Target amount" value="${data ? data.targetAmount : ''}">
         </div>
         <div class="form-group">
@@ -1193,12 +1199,12 @@ async function renderEmotional() {
   const topMood = Object.entries(stats.moods).sort((a,b)=>b[1]-a[1])[0];
 
   document.getElementById('emoTotalEntries').textContent = stats.total;
-  document.getElementById('emoTopMood').textContent = topMood ? `${getMoodEmoji(topMood[0])} ${getMoodLabel(topMood[0])}` : '—';
+  document.getElementById('emoTopMood').textContent = topMood ? `${getMoodEmoji(topMood[0])} ${getMoodLabel(topMood[0])}` : 'â€”';
   document.getElementById('emoTopMoodCount').textContent = topMood ? `${topMood[1]} times` : '';
-  document.getElementById('emoBiggest').textContent = stats.biggestEntry ? formatCurrency(stats.biggestAmount) : '—';
+  document.getElementById('emoBiggest').textContent = stats.biggestEntry ? formatCurrency(stats.biggestAmount) : 'â€”';
 
   const tbody = document.getElementById('emoTableBody');
-  if(tbody) tbody.innerHTML = entries.length ? entries.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.category||'General'}</td><td style='font-weight:600'>${formatCurrency(e.amount)}</td><td style='font-size:1.5em'>${getMoodEmoji(e.mood)}</td><td>${e.note||'—'}</td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">No journal entries yet. Add your first one!</td></tr>';
+  if(tbody) tbody.innerHTML = entries.length ? entries.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.category||'General'}</td><td style='font-weight:600'>${formatCurrency(e.amount)}</td><td style='font-size:1.5em'>${getMoodEmoji(e.mood)}</td><td>${e.note||'â€”'}</td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">No journal entries yet. Add your first one!</td></tr>';
   document.getElementById('emoEmpty').style.display = entries.length?'none':'block';
 
   const moodCat={};entries.forEach(e=>{if(!moodCat[e.mood])moodCat[e.mood]={};moodCat[e.mood][e.category||'Other']=(moodCat[e.mood][e.category||'Other']||0)+Number(e.amount);});
@@ -1232,8 +1238,8 @@ async function renderQuests() {
 
   const activeQ = quests.filter(q=>!q.completed);
   const doneQ = quests.filter(q=>q.completed);
-  document.getElementById('activeQuests').innerHTML = activeQ.length ? activeQ.map(q=>`<div class='quest-card'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>+${q.xpReward} XP</span></div><div class='progress-bar'><div class='progress-fill safe' style='width:${(q.progress/(q.target||1))*100}%'></div></div><div style='font-size:0.75em;color:var(--text-muted);margin-top:4px'>${q.progress||0}/${q.target} ${q.description}</div></div>`).join(''):'<div class="empty-state">All quests completed! 🎉</div>';
-  document.getElementById('completedQuests').innerHTML = doneQ.length ? doneQ.map(q=>`<div class='quest-card completed'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>✅ +${q.xpReward} XP</span></div></div>`).join('') : '<div class="empty-state">Complete quests to see them here</div>';
+  document.getElementById('activeQuests').innerHTML = activeQ.length ? activeQ.map(q=>`<div class='quest-card'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>+${q.xpReward} XP</span></div><div class='progress-bar'><div class='progress-fill safe' style='width:${(q.progress/(q.target||1))*100}%'></div></div><div style='font-size:0.75em;color:var(--text-muted);margin-top:4px'>${q.progress||0}/${q.target} ${q.description}</div></div>`).join(''):'<div class="empty-state">All quests completed! ðŸŽ‰</div>';
+  document.getElementById('completedQuests').innerHTML = doneQ.length ? doneQ.map(q=>`<div class='quest-card completed'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>âœ… +${q.xpReward} XP</span></div></div>`).join('') : '<div class="empty-state">Complete quests to see them here</div>';
 
   const streakD = document.getElementById('streakDays'); if(streakD){let h='';for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const day=d.toLocaleDateString('en-US',{weekday:'short'});const active=i<(progress.streak||0);h+=`<div class='streak-day${active?' active':''}'>${day[0]}</div>`;}streakD.innerHTML=h;}
   document.getElementById('questStreakCount').textContent = progress.streak||0;
@@ -1264,7 +1270,7 @@ async function renderAnomalies() {
 
   const active = anomalies.filter(a=>!a.dismissed);
   const list = document.getElementById('anomalyList');
-  if(list) list.innerHTML = active.length ? active.map(a=>`<div class='anomaly-item'><div class='anomaly-info'><div class='anomaly-category'>${a.category}</div><div class='anomaly-detail'>Expected: ${formatCurrency(a.expectedAmount)} → Actual: ${formatCurrency(a.actualAmount)} on ${formatDate(a.date)}</div></div><div class='anomaly-deviation ${a.deviationPercent>0?'up':'down'}'>${a.deviationPercent>0?'+':''}${Math.round(a.deviationPercent)}%</div><div class='anomaly-actions'><button class='btn btn-secondary btn-sm' onclick='dismissAnomaly(${a.id})'>Dismiss</button><button class='btn btn-primary btn-sm' onclick='window.navigateTo("expenses")'>Investigate</button></div></div>`).join('') : '<div class="empty-state">No anomalies detected. Keep tracking expenses!</div>';
+  if(list) list.innerHTML = active.length ? active.map(a=>`<div class='anomaly-item'><div class='anomaly-info'><div class='anomaly-category'>${a.category}</div><div class='anomaly-detail'>Expected: ${formatCurrency(a.expectedAmount)} â†’ Actual: ${formatCurrency(a.actualAmount)} on ${formatDate(a.date)}</div></div><div class='anomaly-deviation ${a.deviationPercent>0?'up':'down'}'>${a.deviationPercent>0?'+':''}${Math.round(a.deviationPercent)}%</div><div class='anomaly-actions'><button class='btn btn-secondary btn-sm' onclick='dismissAnomaly(${a.id})'>Dismiss</button><button class='btn btn-primary btn-sm' onclick='window.navigateTo("expenses")'>Investigate</button></div></div>`).join('') : '<div class="empty-state">No anomalies detected. Keep tracking expenses!</div>';
   document.getElementById('anomalyEmpty').style.display = active.length?'none':'block';
 }
 
@@ -1353,7 +1359,7 @@ async function updateQuestsFromExpenses() {
     }
   }
   const badges = progress.badgesUnlocked || [];
-  if (!badges.includes('first-expense') && expenses.length>0){badges.push('first-expense');showToast('🏅 Badge Unlocked: First Expense!','success');}
+  if (!badges.includes('first-expense') && expenses.length>0){badges.push('first-expense');showToast('ðŸ… Badge Unlocked: First Expense!','success');}
   await updateRecord('userProgress',{id:1,...progress,badgesUnlocked:badges}).catch(()=>{});
 }
 
@@ -1374,8 +1380,8 @@ async function updateStreakProgress() {
     }
   }
   const badges = progress.badgesUnlocked || [];
-  if ((progress.streak||0)>=7 && !badges.includes('streak-7')){badges.push('streak-7');showToast('🔥 Badge Unlocked: 7-Day Streak!','success');}
-  if ((progress.streak||0)>=30 && !badges.includes('streak-30')){badges.push('streak-30');showToast('💪 Badge Unlocked: 30-Day Streak!','success');}
+  if ((progress.streak||0)>=7 && !badges.includes('streak-7')){badges.push('streak-7');showToast('ðŸ”¥ Badge Unlocked: 7-Day Streak!','success');}
+  if ((progress.streak||0)>=30 && !badges.includes('streak-30')){badges.push('streak-30');showToast('ðŸ’ª Badge Unlocked: 30-Day Streak!','success');}
   await updateRecord('userProgress',{id:1,...progress,badgesUnlocked:badges}).catch(()=>{});
 }
 
