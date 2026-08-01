@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Finance Tracker Pro</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>Finance Pro</span>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#dashboard" class="nav-item active" data-page="dashboard">
+        <i class="fa-solid fa-grid-2"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="#income" class="nav-item" data-page="income">
+        <i class="fa-solid fa-arrow-down"></i>
+        <span>Income Sources</span>
+      </a>
+      <a href="#expenses" class="nav-item" data-page="expenses">
+        <i class="fa-solid fa-arrow-up"></i>
+        <span>Expenses</span>
+      </a>
+      <a href="#budget" class="nav-item" data-page="budget">
+        <i class="fa-solid fa-wallet"></i>
+        <span>Monthly Budget</span>
+      </a>
+      <a href="#debtors-creditors" class="nav-item" data-page="debtors-creditors">
+        <i class="fa-solid fa-hand-holding-dollar"></i>
+        <span>Debtors & Creditors</span>
+      </a>
+      <a href="#savings" class="nav-item" data-page="savings">
+        <i class="fa-solid fa-piggy-bank"></i>
+        <span>Savings</span>
+      </a>
+      <a href="#goals" class="nav-item" data-page="goals">
+        <i class="fa-solid fa-bullseye"></i>
+        <span>Goals & Vision</span>
+      </a>
+      <a href="#planning" class="nav-item" data-page="planning">
+        <i class="fa-solid fa-calendar-check"></i>
+        <span>Next Month Plan</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar"><i class="fa-solid fa-user"></i></div>
+        <div>
+          <div class="user-name">Finance User</div>
+          <div class="user-role">Personal Account</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile Header -->
+  <header class="mobile-header" id="mobileHeader">
+    <button class="menu-btn" id="menuBtn"><i class="fa-solid fa-bars"></i></button>
+    <div class="mobile-logo">Finance Pro</div>
+    <div class="mobile-date" id="mobileDate"></div>
+  </header>
+
+  <!-- Overlay for mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Dashboard -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <div class="period-selector">
+          <button class="period-btn active" data-period="current">Current Month</button>
+          <button class="period-btn" data-period="last">Last Month</button>
+          <button class="period-btn" data-period="year">This Year</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card net-income">
+          <div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Net Income</div>
+            <div class="stat-value" id="statNetIncome">₹0</div>
+            <div class="stat-change" id="statNetChange">—</div>
+          </div>
+        </div>
+        <div class="stat-card total-income">
+          <div class="stat-icon"><i class="fa-solid fa-circle-dollar-to-slot"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Total Income</div>
+            <div class="stat-value" id="statTotalIncome">₹0</div>
+            <div class="stat-change" id="statIncomeChange">—</div>
+          </div>
+        </div>
+        <div class="stat-card total-expense">
+          <div class="stat-icon"><i class="fa-solid fa-credit-card"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Total Expenses</div>
+            <div class="stat-value" id="statTotalExpense">₹0</div>
+            <div class="stat-change" id="statExpenseChange">—</div>
+          </div>
+        </div>
+        <div class="stat-card savings-card">
+          <div class="stat-icon"><i class="fa-solid fa-piggy-bank"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">This Month Savings</div>
+            <div class="stat-value" id="statSavings">₹0</div>
+            <div class="stat-change">Target: <span id="statSavingsTarget">₹0</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Budget Alerts -->
+      <div class="alerts-section" id="budgetAlerts"></div>
+      <!-- Quick Summary -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <h3>Income Breakdown</h3>
+          <div id="incomeBreakdown" class="breakdown-list"></div>
+        </div>
+        <div class="summary-card">
+          <h3>Expense Breakdown</h3>
+          <div id="expenseBreakdown" class="breakdown-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Income Sources -->
+    <section class="page" id="page-income">
+      <div class="page-header">
+        <h1>Income Sources</h1>
+        <button class="btn btn-primary" id="btnAddIncome"><i class="fa-solid fa-plus"></i> Add Income</button>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Amount (₹)</th>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="incomeTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="incomeEmpty">No income records yet. Add your first income source!</div>
+      </div>
+    </section>
+
+    <!-- Expenses -->
+    <section class="page" id="page-expenses">
+      <div class="page-header">
+        <h1>Expenses</h1>
+        <button class="btn btn-primary" id="btnAddExpense"><i class="fa-solid fa-plus"></i> Add Expense</button>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Amount (₹)</th>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="expenseTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="expenseEmpty">No expense records yet.</div>
+      </div>
+    </section>
+
+    <!-- Budget -->
+    <section class="page" id="page-budget">
+      <div class="page-header">
+        <h1>Monthly Budget</h1>
+        <button class="btn btn-primary" id="btnSetBudget"><i class="fa-solid fa-gear"></i> Set Budget</button>
+      </div>
+      <div class="budget-overview">
+        <div class="budget-total-card">
+          <div class="budget-ring">
+            <svg viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" class="ring-bg"/>
+              <circle cx="60" cy="60" r="52" class="ring-progress" id="budgetRing"/>
+            </svg>
+            <div class="ring-text">
+              <span id="budgetPercent">0%</span>
+              <small>Used</small>
+            </div>
+          </div>
+          <div class="budget-numbers">
+            <div>Budget: <strong id="totalBudget">₹0</strong></div>
+            <div>Spent: <strong id="totalSpent">₹0</strong></div>
+            <div>Remaining: <strong id="totalRemaining">₹0</strong></div>
+          </div>
+        </div>
+      </div>
+      <div class="budget-categories" id="budgetCategories"></div>
+    </section>
+
+    <!-- Debtors & Creditors -->
+    <section class="page" id="page-debtors-creditors">
+      <div class="page-header">
+        <h1>Debtors & Creditors</h1>
+        <button class="btn btn-primary" id="btnAddParty"><i class="fa-solid fa-plus"></i> Add Entry</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="debtors">Debtors (Receivable)</button>
+        <button class="tab" data-tab="creditors">Creditors (Payable)</button>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Person/Entity</th>
+              <th>Amount (₹)</th>
+              <th>Date</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="partyTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="partyEmpty">No entries yet.</div>
+      </div>
+    </section>
+
+    <!-- Savings -->
+    <section class="page" id="page-savings">
+      <div class="page-header">
+        <h1>Savings Tracker</h1>
+        <button class="btn btn-primary" id="btnSetSavingsGoal"><i class="fa-solid fa-gear"></i> Set Savings Goal</button>
+      </div>
+      <div class="savings-overview">
+        <div class="savings-goal-card">
+          <div class="goal-header">
+            <h3>Monthly Savings Goal</h3>
+            <div class="goal-badge" id="savingsGoalBadge">Not Set</div>
+          </div>
+          <div class="goal-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" id="savingsProgressFill" style="width:0%"></div>
+            </div>
+            <div class="progress-labels">
+              <span>Saved: <strong id="savingsSaved">₹0</strong></span>
+              <span>Goal: <strong id="savingsGoalAmount">₹0</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h3 style="margin-top:24px">Savings History</h3>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Target (₹)</th>
+              <th>Saved (₹)</th>
+              <th>Shortfall (₹)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="savingsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Goals & Vision -->
+    <section class="page" id="page-goals">
+      <div class="page-header">
+        <h1>Goals & Vision</h1>
+        <button class="btn btn-primary" id="btnAddGoal"><i class="fa-solid fa-plus"></i> Add Goal</button>
+      </div>
+      <div class="goals-grid" id="goalsGrid"></div>
+      <div class="empty-state" id="goalsEmpty">No goals set. Define your financial vision!</div>
+    </section>
+
+    <!-- Next Month Planning -->
+    <section class="page" id="page-planning">
+      <div class="page-header">
+        <h1>Next Month Planning</h1>
+        <h3 id="nextMonthLabel"></h3>
+      </div>
+      <div class="planning-grid">
+        <div class="plan-card">
+          <h3><i class="fa-solid fa-bullseye"></i> Income Target</h3>
+          <div class="plan-input-group">
+            <input type="number" id="planIncomeTarget" placeholder="Target Income (₹)" class="input">
+            <button class="btn btn-primary btn-sm" id="btnSaveIncomeTarget">Save</button>
+          </div>
+          <div class="plan-current" id="planIncomeCurrent"></div>
+        </div>
+        <div class="plan-card">
+          <h3><i class="fa-solid fa-chart-line"></i> Expense Limit</h3>
+          <div class="plan-input-group">
+            <input type="number" id="planExpenseLimit" placeholder="Max Expense (₹)" class="input">
+            <button class="btn btn-primary btn-sm" id="btnSaveExpenseLimit">Save</button>
+          </div>
+          <div class="plan-current" id="planExpenseCurrent"></div>
+        </div>
+        <div class="plan-card">
+          <h3><i class="fa-solid fa-piggy-bank"></i> Savings Target</h3>
+          <div class="plan-input-group">
+            <input type="number" id="planSavingsTarget" placeholder="Target Savings (₹)" class="input">
+            <button class="btn btn-primary btn-sm" id="btnSaveSavingsTarget">Save</button>
+          </div>
+          <div class="plan-current" id="planSavingsCurrent"></div>
+        </div>
+        <div class="plan-card">
+          <h3><i class="fa-solid fa-note-sticky"></i> Notes</h3>
+          <textarea id="planNotes" placeholder="Planning notes for next month..." class="input textarea"></textarea>
+          <button class="btn btn-primary btn-sm" id="btnSavePlanNotes">Save Notes</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add Entry</h2>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary" id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+</body>
+</html>
