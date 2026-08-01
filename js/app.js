@@ -129,10 +129,25 @@ function navigateTo(page) {
 
 function initDashboard() {}
 
+/** CROSS-MODULE REFRESH: after ANY data change, cascade to all linked pages */
 async function refreshAll() {
   await refreshDashboard();
   renderHealth();
   renderQuests();
+  renderIncome();
+  renderExpenses();
+  renderBudget();
+  renderParties();
+  renderSavings();
+  renderGoals();
+  renderPlanning();
+  renderEmotional();
+  renderAnomalies();
+  // Auto-update quests & streak based on expenses
+  await updateQuestsFromExpenses();
+  await updateStreakProgress();
+  // Auto-save monthly savings to history
+  await syncSavingsHistory();
 }
 
 async function refreshDashboard() {
@@ -373,6 +388,10 @@ async function renderBudget() {
           <span>Spent: <strong style="color:${pct >= 100 ? 'var(--danger)' : 'inherit'}">${formatCurrency(spent)}</strong></span>
           <span>Budget: <strong>${formatCurrency(b.amount)}</strong></span>
           <span>Left: <strong style="color:${pct >= 100 ? 'var(--danger)' : 'var(--success)'}">${formatCurrency(Math.max(0, b.amount - spent))}</strong></span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+          <button class="btn btn-secondary btn-sm" onclick="editBudgetCard('${b.category}',${b.amount})"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+          <button class="btn btn-secondary btn-sm" style="background:rgba(239,68,68,0.1);color:var(--danger)" onclick="deleteBudgetCard('${b.category}')"><i class="fa-solid fa-trash"></i> Delete</button>
         </div>
       </div>
     `;
@@ -832,19 +851,32 @@ function openModal(type, data = null) {
   // Mood selector init
   initMoodSelector(body, data);
 
+  // Add delete button to modal if editing
+  const footer = document.querySelector('.modal-footer');
+  const existingDeleteBtn = document.getElementById('modalDeleteBtn');
+  if (existingDeleteBtn) existingDeleteBtn.remove();
+  if (data && editingStore) {
+    const delBtn = document.createElement('button');
+    delBtn.id = 'modalDeleteBtn';
+    delBtn.className = 'btn btn-secondary';
+    delBtn.style.cssText = 'background:rgba(239,68,68,0.15);color:var(--danger);margin-right:auto';
+    delBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+    delBtn.onclick = async () => {
+      if (confirm('Delete this entry permanently?')) {
+        await deleteRecord(editingStore, data.id);
+        closeModal();
+        showToast('Deleted', 'success');
+        refreshAll();
+      }
+    };
+    footer.insertBefore(delBtn, footer.firstChild);
+  }
+
   // Save handler
   saveBtn.onclick = async () => {
     await saveFormData(type);
     closeModal();
-    switch (type) {
-      case 'income': renderIncome(); refreshDashboard(); break;
-      case 'expense': renderExpenses(); refreshDashboard(); break;
-      case 'budget': renderBudget(); refreshDashboard(); break;
-      case 'party': renderParties(); break;
-      case 'savingsGoal': renderSavings(); break;
-      case 'goal': renderGoals(); break;
-      case 'journalEntry': renderEmotional(); refreshDashboard(); break;
-    }
+    refreshAll();
   };
 
   modal.classList.add('show');
@@ -870,6 +902,7 @@ async function saveFormData(type) {
       if (editingId) { data.id = editingId; await updateRecord('income', data); }
       else await addRecord('income', data);
       showToast(editingId ? 'Income updated' : 'Income added', 'success');
+      await refreshAll();
       break;
     }
     case 'expense': {
@@ -891,6 +924,7 @@ async function saveFormData(type) {
       }
       await runAnomalyDetection();
       showToast(editingId ? 'Expense updated' : 'Expense added', 'success');
+      await refreshAll();
       break;
     }
     case 'budget': {
@@ -901,6 +935,7 @@ async function saveFormData(type) {
       if (!data.category || !data.amount) { showToast('Please fill required fields', 'error'); return; }
       await updateRecord('budgets', data);
       showToast('Budget saved', 'success');
+      await refreshAll();
       break;
     }
     case 'party': {
@@ -917,6 +952,7 @@ async function saveFormData(type) {
       if (editingId) { data.id = editingId; await updateRecord('parties', data); }
       else await addRecord('parties', data);
       showToast(editingId ? 'Entry updated' : 'Entry added', 'success');
+      await refreshAll();
       break;
     }
     case 'savingsGoal': {
@@ -924,6 +960,7 @@ async function saveFormData(type) {
       if (!target) { showToast('Please enter target amount', 'error'); return; }
       await updateRecord('savingsGoals', { id: 1, monthlyTarget: target });
       showToast('Savings goal set!', 'success');
+      await refreshAll();
       break;
     }
     case 'goal': {
@@ -938,6 +975,7 @@ async function saveFormData(type) {
       if (editingId) { data.id = editingId; await updateRecord('goals', data); }
       else await addRecord('goals', data);
       showToast(editingId ? 'Goal updated' : 'Goal added', 'success');
+      await refreshAll();
       break;
     }
     case 'journalEntry': {
@@ -951,6 +989,7 @@ async function saveFormData(type) {
       if (!data.mood) { showToast('Please select a mood', 'error'); return; }
       try { await addRecord('emotionalJournal', data); } catch(e) { lsSet('emotionalJournal', [...lsGet('emotionalJournal'), data]); }
       showToast('Journal entry saved!', 'success');
+      await refreshAll();
       break;
     }
   }
@@ -974,11 +1013,8 @@ async function deleteAndRefresh(store, id) {
   showToast('Deleted', 'success');
 
   switch (store) {
-    case 'income': renderIncome(); refreshDashboard(); break;
-    case 'expenses': renderExpenses(); refreshDashboard(); break;
-    case 'parties': renderParties(); break;
-    case 'goals': renderGoals(); break;
-    case 'emotionalJournal': renderEmotional(); break;
+    case 'income': case 'expenses': case 'parties': case 'goals': case 'emotionalJournal': case 'budgets':
+      refreshAll(); return;
   }
 }
 
@@ -998,6 +1034,17 @@ function showToast(msg, type = 'info') {
     toast.style.transition = '0.3s ease';
     setTimeout(() => toast.remove(), 300);
   }, 2500);
+}
+
+/** Budget card inline edit/delete */
+async function editBudgetCard(cat, amt) {
+  openModal('budget', { category: cat, amount: amt });
+}
+async function deleteBudgetCard(cat) {
+  if (!confirm(`Delete budget for "${cat}"?`)) return;
+  await deleteRecord('budgets', cat);
+  showToast('Budget deleted', 'success');
+  refreshAll();
 }
 
 // ============================================
@@ -1246,5 +1293,82 @@ function initMoodSelector(body, data) {
     if (existingBtn) existingBtn.classList.add('selected');
     const moodInput = document.getElementById('formMood');
     if (moodInput) moodInput.value = data.mood;
+  }
+}
+
+// ============================================
+// CROSS-MODULE SYNC ENGINE
+// ============================================
+
+async function updateQuestsFromExpenses() {
+  const {from,to}=getMonthRange('current');
+  const expenses=(await getAllRecords('expenses')).filter(e=>e.date>=from&&e.date<=to);
+  const quests = await getAllRecords('quests').catch(()=>[]);
+  let progress = {level:1,xp:0,totalXp:0,streak:0,badgesUnlocked:[]};
+  try { const p = await getRecord('userProgress',1); if(p) progress = p; } catch(e){}
+  const catCount={}; expenses.forEach(e=>{catCount[e.category]=(catCount[e.category]||0)+1;});
+  const today = new Date().toISOString().split('T')[0];
+  const todayExp = expenses.filter(e=>e.date===today);
+  const totalExp = expenses.reduce((s,e)=>s+Number(e.amount),0);
+  const allInc = (await getAllRecords('income')).filter(i=>i.date>=from&&i.date<=to);
+  const totalInc = allInc.reduce((s,i)=>s+Number(i.amount),0);
+  const saved = totalInc - totalExp;
+  for (const q of quests) {
+    let newProgress = q.progress;
+    switch(q.id) {
+      case 'quest-1': newProgress = Math.min(q.target, [...new Set(expenses.map(e=>e.date))].length); break;
+      case 'quest-2': { const budgets=await getAllRecords('budgets').catch(()=>[]); const eb={};expenses.forEach(e=>{eb[e.category]=(eb[e.category]||0)+Number(e.amount);}); let under=0; budgets.forEach(b=>{if((eb[b.category]||0)<=Number(b.amount))under++;}); newProgress=Math.min(q.target,under); break; }
+      case 'quest-3': newProgress = Math.min(q.target, Math.round(saved)); break;
+      case 'quest-4': newProgress = todayExp.length===0 ? Math.min(q.target, q.progress+1) : 0; break;
+      case 'quest-5': newProgress = Math.min(q.target, (catCount['Food']||0)); break;
+      case 'quest-6': newProgress = Math.min(q.target, q.progress+1); break;
+    }
+    if (newProgress !== q.progress) { q.progress = newProgress; await updateRecord('quests',q).catch(()=>{}); }
+    if (q.progress >= q.target && !q.completed) {
+      q.completed = true;
+      await updateRecord('quests',q).catch(()=>{});
+      progress.totalXp = (progress.totalXp||0) + q.xpReward;
+      progress.level = getLevelFromXp(progress.totalXp);
+      showToast(`Quest Complete: ${q.title}! +${q.xpReward} XP`,'success');
+    }
+  }
+  const badges = progress.badgesUnlocked || [];
+  if (!badges.includes('first-expense') && expenses.length>0){badges.push('first-expense');showToast('🏅 Badge Unlocked: First Expense!','success');}
+  await updateRecord('userProgress',{id:1,...progress,badgesUnlocked:badges}).catch(()=>{});
+}
+
+async function updateStreakProgress() {
+  const {from,to}=getMonthRange('current');
+  const expenses=(await getAllRecords('expenses')).filter(e=>e.date>=from&&e.date<=to);
+  let progress = {level:1,xp:0,totalXp:0,streak:0,badgesUnlocked:[]};
+  try { const p = await getRecord('userProgress',1); if(p) progress = p; } catch(e){}
+  const today = new Date().toISOString().split('T')[0];
+  const todayExp = expenses.filter(e=>e.date===today);
+  if (todayExp.length > 0) {
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    if (progress.lastActiveDate !== today) {
+      if (progress.lastActiveDate === yesterday.toISOString().split('T')[0]) progress.streak = (progress.streak||0) + 1;
+      else progress.streak = 1;
+      progress.lastActiveDate = today;
+      await updateRecord('userProgress',{id:1,...progress}).catch(()=>{});
+    }
+  }
+  const badges = progress.badgesUnlocked || [];
+  if ((progress.streak||0)>=7 && !badges.includes('streak-7')){badges.push('streak-7');showToast('🔥 Badge Unlocked: 7-Day Streak!','success');}
+  if ((progress.streak||0)>=30 && !badges.includes('streak-30')){badges.push('streak-30');showToast('💪 Badge Unlocked: 30-Day Streak!','success');}
+  await updateRecord('userProgress',{id:1,...progress,badgesUnlocked:badges}).catch(()=>{});
+}
+
+async function syncSavingsHistory() {
+  const monthKey = getCurrentMonthKey();
+  const {from,to}=getMonthRange('current');
+  const income=(await getAllRecords('income')).filter(i=>i.date>=from&&i.date<=to).reduce((s,i)=>s+Number(i.amount),0);
+  const expenses=(await getAllRecords('expenses')).filter(e=>e.date>=from&&e.date<=to).reduce((s,e)=>s+Number(e.amount),0);
+  const saved = Math.max(0, income - expenses);
+  const goal=await getRecord('savingsGoals',1).catch(()=>null);
+  const target = goal ? goal.monthlyTarget : 0;
+  const shortfall = Math.max(0, target - saved);
+  if (saved > 0 || expenses > 0) {
+    await updateRecord('savingsHistory',{month:monthKey,target,saved,shortfall}).catch(()=>{});
   }
 }
