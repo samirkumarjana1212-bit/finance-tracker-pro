@@ -1107,25 +1107,25 @@ async function renderDashHealthWidget(income, expenses) {
 
   const el = document.getElementById('dashHealthScore'); if(!el) return;
   el.textContent = score;
-  const fill = document.getElementById('dashHealthFill'); if(!fill) return;
+  const fill = document.getElementById('dashHealthGauge'); if(!fill) return;
   const circ = 2*Math.PI*42;
   fill.setAttribute('stroke-dasharray', circ);
   fill.setAttribute('stroke-dashoffset', circ - (score/100)*circ);
   fill.setAttribute('stroke', score>=80?'#22c55e':score>=60?'#3b82f6':score>=40?'#f59e0b':'#ef4444');
-  const label = document.getElementById('dashHealthLabel'); if(label) label.textContent = score>=80?'Excellent':score>=60?'Good':score>=40?'Fair':'Poor';
+  const label = document.getElementById('dashHealthGauge'); if(label) label.textContent = score>=80?'Excellent':score>=60?'Good':score>=40?'Fair':'Poor';
 }
 
 async function renderDashStreakWidget(expenses) {
-  const el = document.getElementById('dashFlame'); if(!el) return;
+  const el = document.getElementById('dashStreakCount'); if(!el) return;
   let streak = 0;
   for (let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);const s=d.toISOString().split('T')[0];if(expenses.some(e=>e.date===s)) streak++;else break;}
   el.parentElement.querySelector('.streak-count').textContent = streak;
   el.style.opacity = streak>0 ? '1':'0.3';
-  document.getElementById('dashStreakLabel').textContent = streak>=7?'Keep it up!':streak>=3?'Getting there':'Start tracking';
+  document.getElementById('dashStreakDetail').textContent = streak>=7?'Keep it up!':streak>=3?'Getting there':'Start tracking';
 }
 
 async function renderDashSkipWidget(expenseByCat, allExpenses) {
-  const container = document.getElementById('skipSuggestion'); if(!container) return;
+  const container = document.getElementById('dashSkipSuggestion'); if(!container) return;
   const prevMonth = new Date(); prevMonth.setMonth(prevMonth.getMonth()-1);
   const pmKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}-`;
   const prevExp = allExpenses.filter(e=>e.date.startsWith(pmKey));
@@ -1138,7 +1138,7 @@ async function renderDashSkipWidget(expenseByCat, allExpenses) {
 }
 
 async function renderDashQuestWidget() {
-  const el = document.getElementById('questMiniList'); if(!el) return;
+  const el = document.getElementById('dashQuestMini'); if(!el) return;
   let quests = []; try { quests = await getAllRecords('quests'); } catch(e){quests=DEFAULT_QUESTS;}
   const active = quests.filter(q=>!q.completed).slice(0,3);
   el.innerHTML = active.length ? active.map(q=>`<div class='quest-mini-item'><span class='quest-mini-name'>${q.title}</span><span class='quest-mini-xp'>+${q.xpReward} XP</span></div>`).join('') : '<div class="quest-mini-item" style="color:var(--text-muted)">No active quests</div>';
@@ -1174,11 +1174,11 @@ async function renderHealth() {
   await updateRecord('healthMetrics',{id:1,overallScore:score,lastUpdated:new Date().toISOString()}).catch(()=>{});
 
   const gauge = document.getElementById('healthMainScore'); if(gauge) gauge.textContent = score;
-  const grade = document.getElementById('healthGrade'); if(grade){grade.textContent=score>=80?'Excellent':score>=60?'Good':score>=40?'Fair':'Needs Work';grade.style.color=score>=80?'var(--success)':score>=60?'var(--accent)':score>=40?'var(--warning)':'var(--danger)';}
-  const fill = document.getElementById('healthMainFill'); if(fill){const c=2*Math.PI*82;fill.setAttribute('stroke-dasharray',c);fill.setAttribute('stroke-dashoffset',c-(score/100)*c);fill.setAttribute('stroke',score>=80?'var(--success)':score>=60?'var(--accent)':score>=40?'var(--warning)':'var(--danger)');}
+  const grade = document.getElementById('healthMainGrade'); if(grade){grade.textContent=score>=80?'Excellent':score>=60?'Good':score>=40?'Fair':'Needs Work';grade.style.color=score>=80?'var(--success)':score>=60?'var(--accent)':score>=40?'var(--warning)':'var(--danger)';}
+  const fill = document.getElementById('healthMainGauge'); if(fill){const c=2*Math.PI*82;fill.setAttribute('stroke-dasharray',c);fill.setAttribute('stroke-dashoffset',c-(score/100)*c);fill.setAttribute('stroke',score>=80?'var(--success)':score>=60?'var(--accent)':score>=40?'var(--warning)':'var(--danger)');}
 
   const items = [{id:'savingsRate',name:'Savings Rate',score:savingsRate,desc:'% of income saved'},{id:'budgetAdherence',name:'Budget Adherence',score:budgetAdherence,desc:'Categories within budget'},{id:'emergencyFund',name:'Emergency Fund',score:emergencyFund,desc:'Months of expenses covered'},{id:'debtRatio',name:'Debt Management',score:debtRatio,desc:'Debt-to-income health'},{id:'investmentHealth',name:'Investment Health',score:50,desc:'Portfolio diversification'},{id:'spendingConsistency',name:'Spending Consistency',score:60,desc:'Month-over-month stability'}];
-  const breakdown = document.getElementById('healthBreakdown'); if(breakdown) breakdown.innerHTML = items.map(m=>`<div class='health-factor'><div class='factor-header'><span class='factor-name'>${m.name}</span><span class='factor-score' style='color:${m.score>=80?'var(--success)':m.score>=60?'var(--accent)':m.score>=40?'var(--warning)':'var(--danger)'}'>${Math.round(m.score)}</span></div><div class='progress-bar'><div class='progress-fill ${m.score>=80?'safe':m.score>=60?'':m.score>=40?'warning':'danger'}' style='width:${m.score}%'></div></div><div class='factor-desc'>${m.desc}</div></div>`).join('');
+  const breakdown = document.document.querySelector('.health-breakdown') || document.getElementById('healthBreakdown'); if(breakdown) breakdown.innerHTML = items.map(m=>`<div class='health-factor'><div class='factor-header'><span class='factor-name'>${m.name}</span><span class='factor-score' style='color:${m.score>=80?'var(--success)':m.score>=60?'var(--accent)':m.score>=40?'var(--warning)':'var(--danger)'}'>${Math.round(m.score)}</span></div><div class='progress-bar'><div class='progress-fill ${m.score>=80?'safe':m.score>=60?'':m.score>=40?'warning':'danger'}' style='width:${m.score}%'></div></div><div class='factor-desc'>${m.desc}</div></div>`).join('');
 }
 
 // ============================================
@@ -1199,16 +1199,16 @@ async function renderEmotional() {
   const topMood = Object.entries(stats.moods).sort((a,b)=>b[1]-a[1])[0];
 
   document.getElementById('emoTotalEntries').textContent = stats.total;
-  document.getElementById('emoTopMood').textContent = topMood ? `${getMoodEmoji(topMood[0])} ${getMoodLabel(topMood[0])}` : 'â€”';
-  document.getElementById('emoTopMoodCount').textContent = topMood ? `${topMood[1]} times` : '';
-  document.getElementById('emoBiggest').textContent = stats.biggestEntry ? formatCurrency(stats.biggestAmount) : 'â€”';
+  document.getElementById('emoMostCommon').textContent = topMood ? `${getMoodEmoji(topMood[0])} ${getMoodLabel(topMood[0])}` : 'â€”';
+  document.getElementById('emoMostCommonIcon').textContent = topMood ? `${topMood[1]} times` : '';
+  document.getElementById('emoBiggestSpend').textContent = stats.biggestEntry ? formatCurrency(stats.biggestAmount) : 'â€”';
 
-  const tbody = document.getElementById('emoTableBody');
+  const tbody = document.getElementById('journalEntriesList');
   if(tbody) tbody.innerHTML = entries.length ? entries.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.category||'General'}</td><td style='font-weight:600'>${formatCurrency(e.amount)}</td><td style='font-size:1.5em'>${getMoodEmoji(e.mood)}</td><td>${e.note||'â€”'}</td></tr>`).join('') : '<tr><td colspan="5" class="empty-state">No journal entries yet. Add your first one!</td></tr>';
-  document.getElementById('emoEmpty').style.display = entries.length?'none':'block';
+  document.document.getElementById('journalEntriesList').style.display = entries.length?'none':'block';
 
   const moodCat={};entries.forEach(e=>{if(!moodCat[e.mood])moodCat[e.mood]={};moodCat[e.mood][e.category||'Other']=(moodCat[e.mood][e.category||'Other']||0)+Number(e.amount);});
-  const patterns = document.getElementById('emoPatterns');
+  const patterns = document.getElementById('spendingTriggers');
   if(patterns) patterns.innerHTML = Object.entries(moodCat).slice(0,4).map(([mood,cats])=>`<div class='pattern-card'><h4>${getMoodEmoji(mood)} When ${getMoodLabel(mood)}</h4>${Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([cat,amt])=>`<div class='pattern-item'><span>${cat}</span><span>${formatCurrency(amt)}</span></div>`).join('')}</div>`).join('') || '<div class="empty-state">Log more entries to see patterns</div>';
 }
 
@@ -1232,16 +1232,16 @@ async function renderQuests() {
   const curXp = getCurrentLevelXp(progress.totalXp||0);
   const xpPct = nextXp>curXp?((progress.totalXp-curXp)/(nextXp-curXp))*100:100;
 
-  document.getElementById('questLevel').textContent = level;
-  const xpBar=document.getElementById('questXpBar'); if(xpBar)xpBar.style.width=xpPct+'%';
-  document.getElementById('questXpText').textContent = `${progress.totalXp||0}/${nextXp} XP`;
+  document.getElementById('questLevelBadge').textContent = level;
+  const xpBar=document.getElementById('questXPBar'); if(xpBar)xpBar.style.width=xpPct+'%';
+  document.getElementById('questXPCurrent').textContent = `${progress.totalXp||0}/${nextXp} XP`;
 
   const activeQ = quests.filter(q=>!q.completed);
   const doneQ = quests.filter(q=>q.completed);
-  document.getElementById('activeQuests').innerHTML = activeQ.length ? activeQ.map(q=>`<div class='quest-card'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>+${q.xpReward} XP</span></div><div class='progress-bar'><div class='progress-fill safe' style='width:${(q.progress/(q.target||1))*100}%'></div></div><div style='font-size:0.75em;color:var(--text-muted);margin-top:4px'>${q.progress||0}/${q.target} ${q.description}</div></div>`).join(''):'<div class="empty-state">All quests completed! ðŸŽ‰</div>';
-  document.getElementById('completedQuests').innerHTML = doneQ.length ? doneQ.map(q=>`<div class='quest-card completed'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>âœ… +${q.xpReward} XP</span></div></div>`).join('') : '<div class="empty-state">Complete quests to see them here</div>';
+  document.getElementById('dailyQuests').innerHTML = activeQ.length ? activeQ.map(q=>`<div class='quest-card'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>+${q.xpReward} XP</span></div><div class='progress-bar'><div class='progress-fill safe' style='width:${(q.progress/(q.target||1))*100}%'></div></div><div style='font-size:0.75em;color:var(--text-muted);margin-top:4px'>${q.progress||0}/${q.target} ${q.description}</div></div>`).join(''):'<div class="empty-state">All quests completed! ðŸŽ‰</div>';
+  document.getElementById('weeklyQuests').innerHTML = doneQ.length ? doneQ.map(q=>`<div class='quest-card completed'><div class='quest-header'><span class='quest-name'>${q.title}</span><span class='quest-xp'>âœ… +${q.xpReward} XP</span></div></div>`).join('') : '<div class="empty-state">Complete quests to see them here</div>';
 
-  const streakD = document.getElementById('streakDays'); if(streakD){let h='';for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const day=d.toLocaleDateString('en-US',{weekday:'short'});const active=i<(progress.streak||0);h+=`<div class='streak-day${active?' active':''}'>${day[0]}</div>`;}streakD.innerHTML=h;}
+  const streakD = document.getElementById('questStreakDetail'); if(streakD){let h='';for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const day=d.toLocaleDateString('en-US',{weekday:'short'});const active=i<(progress.streak||0);h+=`<div class='streak-day${active?' active':''}'>${day[0]}</div>`;}streakD.innerHTML=h;}
   document.getElementById('questStreakCount').textContent = progress.streak||0;
 
   const badgeGrid=document.getElementById('badgesGrid');
@@ -1256,8 +1256,8 @@ async function initAnomalies() {
   let settings = null; try{settings=await getRecord('anomalySettings',1);}catch(e){}
   if(!settings) await updateRecord('anomalySettings',{id:1,sensitivity:3,enabled:true}).catch(()=>{});
   const slider = document.getElementById('anomalySensitivity');
-  if(slider){slider.addEventListener('input',async()=>{await updateRecord('anomalySettings',{id:1,sensitivity:Number(slider.value),enabled:true});document.getElementById('sensitivityValue').textContent=slider.value;});}
-  const refreshBtn = document.getElementById('btnDetectAnomalies');
+  if(slider){slider.addEventListener('input',async()=>{await updateRecord('anomalySettings',{id:1,sensitivity:Number(slider.value),enabled:true});document.getElementById('anomalySensValue').textContent=slider.value;});}
+  const refreshBtn = document.null;
   if(refreshBtn) refreshBtn.addEventListener('click', async()=>{await runAnomalyDetection();renderAnomalies();showToast('Anomaly scan complete','success');});
 }
 
@@ -1266,12 +1266,12 @@ async function renderAnomalies() {
   anomalies.sort((a,b)=>new Date(b.date)-new Date(a.date));
   let settings={sensitivity:3};try{const s=await getRecord('anomalySettings',1);if(s)settings=s;}catch(e){}
   if(document.getElementById('anomalySensitivity')) document.getElementById('anomalySensitivity').value = settings.sensitivity;
-  if(document.getElementById('sensitivityValue')) document.getElementById('sensitivityValue').textContent = settings.sensitivity;
+  if(document.getElementById('anomalySensValue')) document.getElementById('anomalySensValue').textContent = settings.sensitivity;
 
   const active = anomalies.filter(a=>!a.dismissed);
   const list = document.getElementById('anomalyList');
   if(list) list.innerHTML = active.length ? active.map(a=>`<div class='anomaly-item'><div class='anomaly-info'><div class='anomaly-category'>${a.category}</div><div class='anomaly-detail'>Expected: ${formatCurrency(a.expectedAmount)} â†’ Actual: ${formatCurrency(a.actualAmount)} on ${formatDate(a.date)}</div></div><div class='anomaly-deviation ${a.deviationPercent>0?'up':'down'}'>${a.deviationPercent>0?'+':''}${Math.round(a.deviationPercent)}%</div><div class='anomaly-actions'><button class='btn btn-secondary btn-sm' onclick='dismissAnomaly(${a.id})'>Dismiss</button><button class='btn btn-primary btn-sm' onclick='window.navigateTo("expenses")'>Investigate</button></div></div>`).join('') : '<div class="empty-state">No anomalies detected. Keep tracking expenses!</div>';
-  document.getElementById('anomalyEmpty').style.display = active.length?'none':'block';
+  document.getElementById('anomalyCount').style.display = active.length?'none':'block';
 }
 
 async function dismissAnomaly(id){await updateRecord('anomalies',{...await getRecord('anomalies',id),dismissed:true});renderAnomalies();showToast('Anomaly dismissed','info');}

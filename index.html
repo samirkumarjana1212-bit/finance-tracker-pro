@@ -761,6 +761,13 @@
         <h1>Income Sources</h1>
         <button class="btn btn-primary" id="btnAddIncome"><i class="fa-solid fa-plus"></i> Add Income</button>
       </div>
+      <div class="month-summary" style="margin-bottom:16px;display:flex;gap:12px;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;flex:1;">
+          <div style="font-size:0.8em;color:var(--text-muted);">Total Income</div>
+          <div style="font-size:1.6em;font-weight:800;" id="incomeTotalValue">₹0</div>
+          <div style="font-size:0.75em;color:var(--text-muted);" id="incomeMonthLabel">for Current Month</div>
+        </div>
+      </div>
       <div class="table-container">
         <table class="data-table">
           <thead>
@@ -785,6 +792,13 @@
         <h1>Expenses</h1>
         <button class="btn btn-primary" id="btnAddExpense"><i class="fa-solid fa-plus"></i> Add Expense</button>
       </div>
+      <div class="month-summary" style="margin-bottom:16px;display:flex;gap:12px;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;flex:1;">
+          <div style="font-size:0.8em;color:var(--text-muted);">Total Expenses</div>
+          <div style="font-size:1.6em;font-weight:800;color:var(--danger);" id="expenseTotalValue">₹0</div>
+          <div style="font-size:0.75em;color:var(--text-muted);" id="expenseMonthLabel">for Current Month</div>
+        </div>
+      </div>
       <div class="table-container">
         <table class="data-table">
           <thead>
@@ -807,6 +821,7 @@
     <section class="page" id="page-budget">
       <div class="page-header">
         <h1>Monthly Budget</h1>
+        <span class="badge badge-info" style="margin:0 12px;" id="budgetMonthDisplay">Current Month</span>
         <button class="btn btn-primary" id="btnSetBudget"><i class="fa-solid fa-gear"></i> Set Budget</button>
       </div>
       <div class="budget-overview">
