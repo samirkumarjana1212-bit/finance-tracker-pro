@@ -321,11 +321,8 @@ async function renderDashCategoryBreakdown(income, expenseByCat) {
   gridEl.innerHTML = budgets.map(b => {
     const spent = expenseByCat[b.category] || 0;
     const pct = b.amount > 0 ? (spent / b.amount) * 100 : 0;
-    const overClass = pct >= 100 ? 'over' : pct >= 80 ? 'near' : '';
-    return `<div class="breakdown-item">
-      <span class="breakdown-label">${b.category}</span>
-      <span class="breakdown-amount" style="color:${pct>=100?'var(--danger)':pct>=80?'var(--warning)':'var(--success)}">${formatCurrency(spent)} / ${formatCurrency(b.amount)}</span>
-    </div>`;
+    const color = pct>=100?'var(--danger)':pct>=80?'var(--warning)':'var(--success)';
+    return '<div class="breakdown-item"><span class="breakdown-label">'+b.category+'</span><span class="breakdown-amount" style="color:'+color+'">'+formatCurrency(spent)+' / '+formatCurrency(b.amount)+'</span></div>';
   }).join('');
 
   // Also show budget alerts
